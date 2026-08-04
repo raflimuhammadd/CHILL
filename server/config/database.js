@@ -36,4 +36,4 @@ pool.getConnection()
         console.error('Please check your database configuration in the .env file.');
     });
 
-    module.exports = pool;
+module.exports = pool;

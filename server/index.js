@@ -1,15 +1,15 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+require ('dotenv').config();
 
 const db = require('./config/database');
 
 const app = express();
-app.unsubscribe(cors({
+app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeader: ['Content-Type', 'Authorization', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 app.use(express.json());
@@ -46,7 +46,61 @@ app.get('/api', (req, res) => {
 app.use((req, res, next) => {
     res.status(404).json({
         success: false,
-        message: `Route ${req.methodd} ${req.path} not found`,
+        message: `Route ${req.method} ${req.path} not found`,
         hint: 'Check API documentation at GET /api'
     });
+});
+
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+
+    const statusCode = err.status || err.statusCode || 500;
+
+    const message = err.message || 'Internal Server Error'
+
+    res.status(statusCode).json({
+        success: false,
+        message: message,
+        ...(process.env.NODE_ENV === 'development' && {
+            stack: err.stack,
+            details: err.details || null
+        })
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log('');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🎬 CHILL STREAMS API SERVER');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Local: http://localhost:${PORT}`);
+    console.log(`📍 Health: http://localhost:${PORT}/api/health`);
+    console.log(`📍 API Info: http://localhost:${PORT}/api`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🔗 CORS Origin: ${process.env.CLIENT_URL}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('');
+});
+
+process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    db.end().then(() => {
+        console.log('Database pool closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('\n SIGINT received. Shutting down gracefully...');
+    db.end().then(() => {
+        console.log('Database pool closed');
+        process.exit(0);
+    });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.log('Unhandled Rejection at:', promise, 'reason:', reason);
 });
