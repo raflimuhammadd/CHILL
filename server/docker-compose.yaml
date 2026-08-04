@@ -1,0 +1,16 @@
+services:
+  chill-streams_db:
+    image: mysql:8.4
+    container_name: chill_streams_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: chillroot123
+      MYSQL_DATABASE: chill_streams
+    ports:
+      - "3307:3306"
+    volumes:
+      - chill_streams_data:/var/lib/mysql
+      - ./database/chill-streams-schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  chill_streams_data:

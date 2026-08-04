@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap');
+@import "tailwindcss";
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .container-responsive {
+    width: 100%;
+    padding-inline: clamp(2rem, 2.5vw, 4rem);
+  }
+  .container-fluid {
+    width: 100%;
+    padding-inline: clamp(1rem, 2vw, 2rem);
+  }
+  .perfect-circle {
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+}
+
+
+/* Custom theme for Tailwind v4 */
+@theme {
+  --font-family-sans: 'Lato', system-ui, sans-serif;
+  
+  /* Custom colors jika perlu nanti */
+  --color-chill-dark: #0F0F0F;
+  --color-chill-gray: #181A1C;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+/* Global styles */
+body {
+  font-family: theme(--font-family-sans);
+  margin: 0;
+  padding: 0;
+  background-color: theme(--color-chill-dark);
+  overflow-x: hidden;
+  min-height: 100vh;
+  line-height: 1.6;
+  font-smooth: antialiased;
+  -webkit-font-smoothing: antialiased;
+}
+
+.profile-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-dropdown-toggle svg {
+    color: white;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.profile-dropdown-toggle:hover svg {
+    color: white;
+}
+
+/* Desktop: Hover to Show */
+@media (min-width: 640px) {
+    .profile-dropdown .profile-dropdown-menu {
+        display: none;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-dropdown:hover .profile-dropdown-menu {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .profile-dropdown:hover .profile-dropdown-toggle svg {
+        transform: rotate(180deg);
+    }
+}
+
+/* Mobile: Click to Show */
+@media (max-width: 639px) {
+    .profile-dropdown .profile-dropdown-menu {
+        display: none;
+    }
+    
+    .profile-dropdown.open .profile-dropdown-menu {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .profile-dropdown.open .profile-dropdown-toggle svg {
+        transform: rotate(180deg);
+    }
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  background-color: #E50914;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 0 4px;
+}
+
+/* Search & Notification Icons Hover */
+.navbar-right button svg {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.navbar-right button:hover svg {
+  transform: scale(1.1);
+}
+
+
+select option {
+  background-color: #FFFFFF;
+  color: #0F0F0F;
+}

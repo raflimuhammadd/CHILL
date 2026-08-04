@@ -1,0 +1,46 @@
+import { create } from 'zustand';
+
+export const playerStore = create((set) => ({
+  isPlaying: false,
+  isMuted: false,
+  volume: 100,
+  playbackRate: 1,
+  currentTime: 0,
+  duration: 0,
+  buffered: 0,
+  isFullscreen: false,
+  showControls: true,
+  activeMenu: null,
+  selectedSubtitle: 'off',
+  selectedAudio: 'id',
+  showNextEpisode: false,
+
+  setPlaying: (playing) => set({ isPlaying: playing }),
+  setMuted: (muted) => set({ isMuted: muted }),
+  setVolume: (volume) => set({ volume }),
+  setPlaybackRate: (rate) => set({ playbackRate: rate }),
+  setCurrentTime: (time) => set({ currentTime: time }),
+  setDuration: (duration) => set({ duration }),
+  setBuffered: (buffered) => set({ buffered }),
+  toggleFullscreen: () => set((state) => ({ isFullscreen: !state.isFullscreen })),
+  setShowControls: (show) => set({ showControls: show }),
+  openMenu: (menuType) => set({ activeMenu: menuType }),
+  closeMenu: () => set({ activeMenu: null }),
+  setShowNextEpisode: (show) => set({ showNextEpisode: show }),
+  setSelectedSubtitle: (subtitle) => set({selectedSubtitle: subtitle}),
+  setSelectedAudio: (audio) => set({selectedAudio: audio}),
+  reset: () => set({
+    isPlaying: false,
+    isMuted: false,
+    volume: 100,
+    playbackRate: 1,
+    currentTime: 0,
+    duration: 0,
+    buffered: 0,
+    showNextEpisode: false,
+    selectedSubtitle: 'off',
+    selectedAudio: 'id',
+    activeMenu: null,
+    showControls: true
+  })
+}));
