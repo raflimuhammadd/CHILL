@@ -3,6 +3,7 @@ const cors = require('cors');
 require ('dotenv').config();
 
 const db = require('./config/database');
+const { getGenreById } = require('./services/genreService');
 
 const app = express();
 app.use(cors({
@@ -38,10 +39,17 @@ app.get('/api', (req, res) => {
         description: 'Backend API for Chill Streams application',
         endpoints: {
             health: 'GET /api/health',
+            genres: 'GET /api/genres',
+            getGenreById: 'GET /api/genres/:id',
+            createGenre: 'POST /api/genres',
+            updateGenre: 'PATCH /api/genres/:id',
+            deleteGenre: 'DELETE /api/genres/:id'
         },
-        documentation: 'https://github.com/chill-streams/chill-streams'
+        documentation: 'https://github.com/raflimuhammadd/CHILL'
     });
 });
+
+app.use('/api/genres', require('./routes/genreRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({
@@ -53,9 +61,7 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
     console.error('Error:', err);
-
     const statusCode = err.status || err.statusCode || 500;
-
     const message = err.message || 'Internal Server Error'
 
     res.status(statusCode).json({
@@ -69,19 +75,17 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
     console.log('');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🎬 CHILL STREAMS API SERVER');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📍 Local: http://localhost:${PORT}`);
-    console.log(`📍 Health: http://localhost:${PORT}/api/health`);
-    console.log(`📍 API Info: http://localhost:${PORT}/api`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-    console.log(`🔗 CORS Origin: ${process.env.CLIENT_URL}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('CHILL STREAMS API SERVER');
+    console.log('===========================================');
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Local: http://localhost:${PORT}`);
+    console.log(`Health: http://localhost:${PORT}/api/health`);
+    console.log(`API Info: http://localhost:${PORT}/api`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`CORS Origin: ${process.env.CLIENT_URL}`);
+    console.log('============================================');
     console.log('');
 });
 
