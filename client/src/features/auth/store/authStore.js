@@ -1,43 +1,25 @@
 import { create } from "zustand";
 import { registerUser, loginUser, updateUser } from "../../../services/authService";
 
-const planNameMap = {
-    individual: 'Individual',
-    duo: 'Berdua',
-    family: 'Keluarga',
-};
-
-const planIdMap = {
-  Individual: 'individual',
-  Berdua: 'duo',
-  Keluarga: 'family',
-}
+const extractErrorMessage = (err) =>
+    err?.response?.data?.message || err?.message || 'Terjadi kesalahan';
 
 const useAuthStore = create((set) => ({
-  // ── State ──
   user: JSON.parse(localStorage.getItem('chill-user') || 'null'),
   isLoading: false,
   error: null,
 
-  // ── Actions ──
   register: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      const newUser = await registerUser({
-        ...credentials,
-        full_name: '',
-        email: '',
-        isPremium: false,
-        subscription_status: false,
-        subscriptionPlan: null,
-        avatar: '',
-        createdAt: new Date().toISOString(),
+      await registerUser({
+        username: credentials.username,
+        password: credentials.password,
       });
-      localStorage.setItem('chill-user', JSON.stringify(newUser));
-      set({ user: newUser, isLoading: false });
+      set({ user: null, isLoading: false });
       return true;
     } catch (err) {
-      set({ error: err.message, isLoading: false });
+      set({ error: extractErrorMessage(err), isLoading: false });
       return false;
     }
   },
@@ -45,91 +27,75 @@ const useAuthStore = create((set) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      const users = await loginUser(credentials.username);
-      if (users.length === 0) {
-        set({ error: 'Username tidak ditemukan', isLoading: false });
-        return false;
-      }
-      const foundUser = users[0];
-      if (foundUser.password !== credentials.password) {
-        set({ error: 'Kata sandi salah', isLoading: false });
-        return false;
-      }
+      const result = await loginUser({
+        username: credentials.username,
+        password: credentials.password,
+      });
+      const { accessToken, user } = result.data;
 
       const normalizedUser = {
-        ...foundUser,
-        isPremium: Boolean(foundUser.subscription_status ?? foundUser.isPremium),
-        subscriptionPlan: foundUser.subscriptionPlan ?? planIdMap[foundUser.plan] ?? null,
+        ...user,
+        isPremium: Boolean(user.is_premium),
+        subscriptionPlan: null,
       };
+      localStorage.setItem('chill-token', accessToken);
       localStorage.setItem('chill-user', JSON.stringify(normalizedUser));
       set({ user: normalizedUser, isLoading: false });
       return true;
     } catch (err) {
-      set({ error: err.message, isLoading: false });
+      set({ error: extractErrorMessage(err), isLoading: false });
       return false;
     }
   },
 
   logout: () => {
+    localStorage.removeItem('chill-token');
     localStorage.removeItem('chill-user');
     set({ user: null, error: null });
   },
 
   updateProfile: async (updates) => {
-    set({isLoading: true, error: null});
+    set({ isLoading: true, error: null });
     try {
       const currentUser = useAuthStore.getState().user;
-      const apiPayload = {...currentUser, ...updates};
-      if ('isPremium' in updates) {
-        apiPayload.subscription_status = updates.isPremium;
-        delete apiPayload.isPremium;
+      const updatedUser = { ...currentUser, ...updates };
+
+      try {
+        await updateUser(updatedUser);
+      } catch (err) {
+        console.log('Profile sync ke backend belum tersedia, update lokal saja', err);
       }
-      const updatedUser = await updateUser(currentUser.id, apiPayload);
-      const normalizedUser = {
-        ...updatedUser,
-        isPremium: Boolean(updatedUser.subscription_status ?? updatedUser.isPremium),
-      };
-      localStorage.setItem('chill-user', JSON.stringify(normalizedUser));
-      set({user: updatedUser, isLoading: false});
+
+      localStorage.setItem('chill-user', JSON.stringify(updatedUser));
+      set({ user: updatedUser, isLoading: false });
       return true;
     } catch (err) {
-      set({error: err.message, isLoading: false});
+      set({ error: extractErrorMessage(err), isLoading: false });
       return false;
     }
   },
-
-
 
   setPremium: async (planId = 'individual') => {
     const currentUser = useAuthStore.getState().user;
     if (!currentUser) return;
 
-    const normalizedUser = {
-      ...currentUser, 
-      isPremium: true, 
-      subscriptionPlan: planId
-    };
+    const normalizedUser = { ...currentUser, isPremium: true, subscriptionPlan: planId };
     localStorage.setItem('chill-user', JSON.stringify(normalizedUser));
-    set({user: normalizedUser, isLoading: false});
+    set({ user: normalizedUser, isLoading: false });
 
-    // sync to mockapi
     try {
-      await updateUser(currentUser.id, {
-        ...currentUser,
-        subscription_status: true,
-        plan: planNameMap[planId] || 'Premium',
-      });
+      await updateUser({ ...currentUser, subscription_status: true });
     } catch (error) {
-      console.log('Gagal sync plan ke mockAPI:', error);
+      console.log('Gagal sync plan ke backend:', error);
     }
   },
 
   removePremium: () => {
     const currentUser = useAuthStore.getState().user;
     if (!currentUser) return;
-    const updateUser = {...currentUser, isPremium: false, subscriptionPlan: null};
-    localStorage.setItem('chill-user', JSON.stringify(updateUser));
-    set({user: updateUser});
+    const updatedUser = { ...currentUser, isPremium: false, subscriptionPlan: null };
+    localStorage.setItem('chill-user', JSON.stringify(updatedUser));
+    set({ user: updatedUser });
   }
 }));
 

@@ -50,8 +50,8 @@ function RegisterForm() {
        });
 
        if (success) {
-          setSuccessMessage('Registrasi berhasil! Mengalihkan..');
-          setTimeout(() => navigate('/home'), 2000); 
+          setSuccessMessage('Registrasi berhasil! Silahkan masuk.');
+          setTimeout(() => navigate('/login'), 2000); 
       }
     };
 

@@ -43,13 +43,18 @@ app.get('/api', (req, res) => {
             getGenreById: 'GET /api/genres/:id',
             createGenre: 'POST /api/genres',
             updateGenre: 'PATCH /api/genres/:id',
-            deleteGenre: 'DELETE /api/genres/:id'
+            deleteGenre: 'DELETE /api/genres/:id',
+            register: 'POST /api/auth/',
+            login: 'POST /api/auth/login',
+            me: 'GET /api/auth/me',
         },
         documentation: 'https://github.com/raflimuhammadd/CHILL'
     });
 });
 
+// Routes
 app.use('/api/genres', require('./routes/genreRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({

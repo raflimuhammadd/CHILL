@@ -1,23 +1,21 @@
 import apiClient from "./client";
 
 export const registerUser = async (userData) => {
-    const response = await apiClient.post('/users', userData);
+    const response = await apiClient.post('/auth/register', userData);
     return response.data;
 }
 
-export const loginUser = async (username) => {
-    const response = await apiClient.get('/users', {
-        params: {username}
-    });
+export const loginUser = async (credentials) => {
+    const response = await apiClient.post('/auth/login', credentials);
     return response.data;
 }
 
-export const getUserById = async (id) => {
-    const response = await apiClient.get(`/users/${id}`);
+export const getCurrentUser = async () => {
+    const response = await apiClient.get('/auth/me');
     return response.data;
 }
 
-export const updateUser = async (id, userData) => {
-    const response = await apiClient.put(`/users/${id}`, userData);
+export const updateUser = async (userData) => {
+    const response = await apiClient.patch('/users/me', userData);
     return response.data;
 }
