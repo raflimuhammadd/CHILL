@@ -60,11 +60,12 @@ const useAuthStore = create((set) => ({
       const currentUser = useAuthStore.getState().user;
       const updatedUser = { ...currentUser, ...updates };
 
-      try {
-        await updateUser(updatedUser);
-      } catch (err) {
-        console.log('Profile sync ke backend belum tersedia, update lokal saja', err);
+      const payload = {...updateUser};
+      if (payload.avatar) {
+        payload.avatar_url = payload.avatar;
+        delete payload.avatar;
       }
+      await updateUser(payload);
 
       localStorage.setItem('chill-user', JSON.stringify(updatedUser));
       set({ user: updatedUser, isLoading: false });

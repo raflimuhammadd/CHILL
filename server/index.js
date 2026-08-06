@@ -4,6 +4,7 @@ require ('dotenv').config();
 
 const db = require('./config/database');
 const { getGenreById } = require('./services/genreService');
+const { getUserById } = require('./services/authService');
 
 const app = express();
 app.use(cors({
@@ -47,6 +48,8 @@ app.get('/api', (req, res) => {
             register: 'POST /api/auth/',
             login: 'POST /api/auth/login',
             me: 'GET /api/auth/me',
+            getUserById: 'GET /api/users/me',
+            updateUser: 'PATCH /api/users/me'
         },
         documentation: 'https://github.com/raflimuhammadd/CHILL'
     });
@@ -55,6 +58,7 @@ app.get('/api', (req, res) => {
 // Routes
 app.use('/api/genres', require('./routes/genreRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({
