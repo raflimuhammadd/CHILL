@@ -5,7 +5,7 @@
  */
 
 const rateLimit = require('express-rate-limit');
-const { STATUS_CODES, MESSAGES, RATE_LIMIT } = require('../utils/constants');
+const { STATUS_CODES, MESSAGES, RATE_LIMIT } = require('../utils/constant');
 
 /**
  * Custom handler untuk rate limit exceeded

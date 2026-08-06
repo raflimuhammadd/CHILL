@@ -1,4 +1,4 @@
-const {STATUS_CODE, ERROR_CODES} = require('./constant');
+const { STATUS_CODES, ERROR_CODES } = require('./constant');
 
 class AppError extends Error {
     constructor(message, statusCode, code) {
@@ -39,6 +39,13 @@ class AuthError extends AppError {
     }
 }
 
+class ForbiddenError extends AppError {
+    constructor(message) {
+        super(message, STATUS_CODES.FORBIDDEN, ERROR_CODES.FORBIDDEN);
+        this.name = 'ForbiddenError';
+    }
+}
+
 class NotFoundError extends AppError {
     constructor(message) {
         super(message, STATUS_CODES.NOT_FOUND, ERROR_CODES.NOT_FOUND);
@@ -53,18 +60,24 @@ class ConflictError extends AppError {
     }
 }
 
-function isOperationalError(error) {
-    if (error instanceof AppError) {
-        return error.isOperational;
+class RateLimitError extends AppError {
+    constructor(message) {
+        super(message, STATUS_CODES.TOO_MANY_REQUESTS, ERROR_CODES.RATE_LIMIT);
+        this.name = 'RateLimitError';
     }
-    return false;
+}
+
+function isOperationalError(error) {
+    return error instanceof AppError && error.isOperational;
 }
 
 module.exports = {
     AppError,
     ValidationError,
     AuthError,
+    ForbiddenError,
     NotFoundError,
     ConflictError,
+    RateLimitError,
     isOperationalError,
 };

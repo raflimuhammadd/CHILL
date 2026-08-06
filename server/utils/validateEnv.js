@@ -4,7 +4,7 @@
  * Process akan EXIT jika ada critical config yang missing
  */
 
-const { MESSAGES, SECURITY } = require('./constants');
+const { MESSAGES, SECURITY } = require('./constant');
 
 /**
  * Validate environment variables
@@ -13,7 +13,7 @@ const { MESSAGES, SECURITY } = require('./constants');
  * @throws {Error} - Exits process jika validation fails
  */
 function validateEnv() {
-    console.log('🔍 Validating environment variables...');
+    console.log('Validating environment variables...');
     
     const errors = [];
     const warnings = [];
@@ -126,7 +126,7 @@ function validateEnv() {
     
     // Print warnings (yellow)
     if (warnings.length > 0) {
-        console.log('\n⚠️  Configuration Warnings:');
+        console.log('\n Configuration Warnings:');
         warnings.forEach(warning => {
             console.log(`   - ${warning}`);
         });
@@ -134,11 +134,11 @@ function validateEnv() {
     
     // Print errors (red) dan EXIT jika ada
     if (errors.length > 0) {
-        console.error('\n❌ Environment Validation Failed:');
+        console.error('\n Environment Validation Failed:');
         errors.forEach(error => {
             console.error(`   - ${error}`);
         });
-        console.error('\n💡 Please check your .env file and ensure all required variables are set.');
+        console.error('\n Please check your .env file and ensure all required variables are set.');
         console.error('   See .env.example for reference.\n');
         
         // EXIT process dengan error code 1
@@ -146,7 +146,7 @@ function validateEnv() {
     }
     
     // Success message (green)
-    console.log('✅ Environment validation passed\n');
+    console.log(' Environment validation passed\n');
 }
 
 
