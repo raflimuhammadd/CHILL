@@ -4,8 +4,11 @@ const jwt = require('jsonwebtoken');
 
 class AuthService {
     async register ({username, password}) {
-        const normalizedUsername = (username || '').trim();
-        const normalizedPassword = password || '';
+        const normalizedUsername = this.normalizedUsername(username);
+        const validatedPassword = validatedPassword(password);
+        const [rows] = await db.query(
+            'SELECT * FROM users WHERE username = ?', [username.trim()]
+        );
 
         if (!username || !username.trim()) throw new Error('Username is required');
         if (normalizedUsername.length < 3 || normalizedUsername.length > 20) {
