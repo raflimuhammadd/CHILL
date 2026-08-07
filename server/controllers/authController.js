@@ -32,22 +32,3 @@ exports.login = async (req, res, next) => {
         next(error);
    }
 };
-
-exports.me = async (req, res, next) => {
-    try {
-        const user = await authService.getUserById(req.user.id);
-
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-        return success(
-            res,
-            user
-        );
-    } catch(error) {
-        next(error);
-    }
-};

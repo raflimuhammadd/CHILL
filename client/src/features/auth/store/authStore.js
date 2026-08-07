@@ -60,7 +60,7 @@ const useAuthStore = create((set) => ({
       const currentUser = useAuthStore.getState().user;
       const updatedUser = { ...currentUser, ...updates };
 
-      const payload = {...updateUser};
+      const payload = {...currentUser, ...updates};
       if (payload.avatar) {
         payload.avatar_url = payload.avatar;
         delete payload.avatar;

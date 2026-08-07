@@ -11,6 +11,7 @@ class UserService {
         return this._sanitize(rows[0]);
     }
 
+
     async updateProfile(userId, data) {
         const existing = await this.getProfile(userId);
         if (!existing) throw new Error('User not found');

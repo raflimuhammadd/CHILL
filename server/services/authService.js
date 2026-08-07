@@ -7,7 +7,7 @@ const {validateUsername, validatePassword} = require('../utils/validators');
 class AuthService {
     async register ({username, password}) {
         const normalizedUsername = validateUsername(username);
-        const normalizedPassword = validatedPassword(password);
+        const normalizedPassword = validatePassword(password);
         
         const existing = await this._findByUsername(normalizedUsername);
 

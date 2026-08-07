@@ -6,7 +6,7 @@ module.exports = (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
             success: false,
-            message: 'No toke provided, Please login first.'
+            message: 'No token provided, Please login first.'
         });
     }
 
@@ -18,6 +18,7 @@ module.exports = (req, res, next) => {
             id: decoded.id,
             username: decoded.username
         };
+        next();
     } catch(error) {
         return res.status(401).json({
             success: false,

@@ -7,7 +7,7 @@ function success(res, data = null, message = 'Success', statusCode = 200) {
     if (data !== null && data !== undefined) {
         response.data = data;
     }
-    return res.status(statusCode).json(resposne);
+    return res.status(statusCode).json(response);
 }
 
 function error (res, message = 'Internal server error', statusCode = 500, code = null) {

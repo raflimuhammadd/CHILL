@@ -4,7 +4,6 @@ require ('dotenv').config();
 
 const db = require('./config/database');
 const { getGenreById } = require('./services/genreService');
-const { getUserById } = require('./services/authService');
 
 const app = express();
 app.use(cors({
@@ -45,9 +44,8 @@ app.get('/api', (req, res) => {
             createGenre: 'POST /api/genres',
             updateGenre: 'PATCH /api/genres/:id',
             deleteGenre: 'DELETE /api/genres/:id',
-            register: 'POST /api/auth/',
+            register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
-            me: 'GET /api/auth/me',
             getUserById: 'GET /api/users/me',
             updateUser: 'PATCH /api/users/me'
         },

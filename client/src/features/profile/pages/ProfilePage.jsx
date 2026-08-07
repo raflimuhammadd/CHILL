@@ -45,6 +45,7 @@ function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-chill-dark text-white flex flex-col">
+      <div className="min(100% - clamp(1rem, 4vw, 3rem) * 2, 1400px)">
       <Navbar />
 
       <main className="flex-1 pt-24 md:pt-28">
@@ -81,6 +82,7 @@ function ProfilePage() {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 }
