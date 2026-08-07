@@ -67,20 +67,20 @@ const JWT_EXPIRES = '7d';
 
 // ===== RATE LIMIT =====
 const RATE_LIMIT = {
-    GENERAL_WINDOW_MS: 15 * 60 * 1000,      // 15 menit
+    GENERAL_WINDOW_MS: 15 * 60 * 1000, // 15 menit
     GENERAL_MAX_REQUESTS: 100,
-    AUTH_WINDOW_MS: 15 * 60 * 1000,         // 15 menit
+    AUTH_WINDOW_MS: 15 * 60 * 1000, // 15 menit
     AUTH_MAX_REQUESTS: 5,
-    STRICT_WINDOW_MS: 60 * 60 * 1000,       // 1 jam
+    STRICT_WINDOW_MS: 60 * 60 * 1000, // 1 jam
     STRICT_MAX_REQUESTS: 3,
 };
 
-// ===== SECURITY DEFAULTS (untuk validateEnv.js) =====
+// ===== SECURITY DEFAULTS =====
 const SECURITY = {
     DEFAULT_JWT_EXPIRES_IN: '7d',
     DEFAULT_BCRYPT_SALT_ROUNDS: 10,
     MIN_BCRYPT_SALT_ROUNDS: 8,
-    MAX_BCRYPT_SALT_ROUNDS: 16,
+    MAX_BCRYPT_SALT_ROUNDS: 10,
 };
 
 const VALIDATION = {
@@ -95,7 +95,7 @@ const VALIDATION = {
     GENRE_SLUG_PATTERN: /^[a-z0-9-]+$/,
 };
 
-// Namespace alias untuk file yang import { STATUS_CODES }
+// ALIAS for imports file { STATUS_CODES }
 const STATUS_CODES = {
     OK: HTTP_OK,
     CREATED: HTTP_CREATED,
@@ -109,10 +109,8 @@ const STATUS_CODES = {
     SERVER_ERROR: HTTP_SERVER_ERROR,
 };
 
-// Namespace alias untuk file yang import { MESSAGES }
 const MESSAGES = MSG;
 
-// Export flat (backward compatible) + namespace object
 module.exports = {
     // flat
     USERNAME_MIN,
