@@ -1,4 +1,7 @@
 const db = require('../config/database');
+const {ValidationError, ConflictError, NotFoundError} = require('../utils/error');
+const { MESSAGES } = require('../utils/constant');
+
 
 class GenreService {
     async getAllGenres() {
@@ -30,7 +33,7 @@ class GenreService {
             const {name} = data;
 
             if (!name || name.trim() === '') {
-                throw new Error('Genre name is required');
+                throw new ValidationError(MESSAGES.GENRE_NAME_REQUIRED);
             }
 
             const slug = data.slug || this._generateSlug(name);

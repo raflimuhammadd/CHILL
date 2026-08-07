@@ -1,13 +1,11 @@
 const jwt = require('jsonwebtoken');
+const {AuthError} = require('../utils/error');
 
 module.exports = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-            success: false,
-            message: 'No token provided, Please login first.'
-        });
+        throw new AuthError('No token provided, please login first.');
     }
 
     const token = authHeader.split(' ')[1];

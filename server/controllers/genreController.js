@@ -1,13 +1,10 @@
 const genreService = require('../services/genreService');
 
+
 exports.getAllGenres = async (req, res, next) => {
     try {
         const genres = await genreService.getAllGenres();
-
-        res.status(200).json({
-            success: true,
-            data: genres
-        });
+            success(res, genres, 'Genres retrieved successfully')
     } catch (error) {
         next(error);
     }

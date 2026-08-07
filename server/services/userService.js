@@ -1,5 +1,8 @@
 const db = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { NotFoundError, ConflictError, ValidationError } = require('../utils/error');
+const { MESSAGES } = require('../utils/constant');
+const { validateEmail } = require('../utils/validators');
 
 class UserService {
     async getProfile(userId) {
@@ -8,37 +11,58 @@ class UserService {
              FROM users WHERE id = ? AND deleted_at IS NULL`,
             [userId]
         );
-        return this._sanitize(rows[0]);
+        const user = rows[0];
+        if (!user) {
+            throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
+        }
+        return this._sanitize(user);
     }
-
 
     async updateProfile(userId, data) {
         const existing = await this.getProfile(userId);
-        if (!existing) throw new Error('User not found');
+        if (!existing) {
+            throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
+        }
 
         const updateFields = {};
-        if (data.full_name !== undefined) updateFields.full_name = data.full_name.trim();
-        if (data.avatar !== undefined) updateFields.avatar_url = data.avatar;
-        if (data.avatar_url !== undefined) updateFields.avatar_url = data.avatar_url;
+        
+        if (data.full_name !== undefined) {
+            updateFields.full_name = data.full_name.trim();
+        }
+        
+        if (data.avatar !== undefined) {
+            updateFields.avatar_url = data.avatar;
+        }
+        
+        if (data.avatar_url !== undefined) {
+            updateFields.avatar_url = data.avatar_url;
+        }
+        
         if (data.password !== undefined) {
-            if (!data.password.trim()) throw new Error('Password cannot be empty');
-            if (data.password.length < 6) throw new Error('Password must be at least 6 characters');
+            if (!data.password.trim()) {
+                throw new ValidationError(MESSAGES.PASSWORD_REQUIRED);
+            }
+            if (data.password.length < 6) {
+                throw new ValidationError(MESSAGES.PASSWORD_LENGTH);
+            }
             updateFields.password_hash = await bcrypt.hash(data.password, 10);
         }
+        
         if (data.email !== undefined) {
-            const trimmedEmail = data.email.trim();
-            updateFields.email = trimmedEmail === '' ? null : trimmedEmail.toLowerCase();
-            
-            // Cek duplikat email (kecuali email milik user sendiri)
-            const existingEmail = await this._findByEmail(updateFields.email);
-            if (existingEmail && existingEmail.id !== userId) {
-                throw new Error('Email already in use');
+            const validEmail = validateEmail(data.email);
+            if (validEmail) {
+                updateFields.email = validEmail;
+                const existingEmail = await this._findByEmail(validEmail);
+                if (existingEmail && existingEmail.id !== userId) {
+                    throw new ConflictError(MESSAGES.EMAIL_IN_USE);
+                }
             }
         }
 
-        // Build dynamic UPDATE query
         const fields = Object.keys(updateFields);
-        if (fields.length === 0) throw new Error('No fields to update');
+        if (fields.length === 0) {
+            throw new ValidationError('No fields to update');
+        }
 
         const setClause = fields.map(f => `${f} = ?`).join(', ');
         const values = [...fields.map(f => updateFields[f]), userId];

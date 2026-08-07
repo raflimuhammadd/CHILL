@@ -53,6 +53,19 @@ const MSG = {
     GENRE_NOT_FOUND: 'Genre not found',
     GENRE_SLUG_EXISTS: 'Slug already exists',
 
+    // Content
+    CONTENT_NOT_FOUND: 'Content not found',
+    CONTENT_TYPE_INVALID: 'Content type must be "movie" or "series"',
+    EPISODE_NOT_FOUND: 'Episode not found',
+    
+    // Watch History
+    WATCH_HISTORY_NOT_FOUND: 'Watch history not found',
+    PROGRESS_INVALID: 'Progress must be between 0 and duration',
+    
+    // General validation
+    INVALID_QUERY_PARAM: 'Invalid query parameter',
+    REQUIRED_FIELD_MISSING: 'Required field is missing',
+
     // General
     INVALID_ID: 'Invalid ID. Must be a positive number',
     SERVER_ERROR: 'Internal server error',
