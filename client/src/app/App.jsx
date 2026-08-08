@@ -18,11 +18,13 @@ import WatchHistoryPage from '../pages/WatchHistoryPage';
 import SearchPage from '../pages/SearchPage';
 import NotificationsPage from '../pages/NotificationsPage';
 import ScrollToTop from '../components/ScrollToTop';
+import Toaster from 'react-hot-toast';
 
 function App() {
   return (
     <BrowserRouter>
     <ScrollToTop/>
+    <Toaster position="top-right" gutter={8} containerClassName="mb-4"/>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

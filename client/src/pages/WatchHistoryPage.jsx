@@ -9,6 +9,7 @@ import {
 } from '../store/redux/slices/watchHistorySlice';
 import {filmData} from '../data/filmData';
 import useAuthStore from '../features/auth/store/authStore';
+import toast from 'react-hot-toast';
 
 const allFilms = Object.values(filmData);
 
@@ -65,17 +66,30 @@ function WatchHistoryPage() {
     const handleAdd = () => {
         if (!form.filmId || !form.title) return;
 
-        const alreadyExists = items.some((item) => item.filmId === form.filmId);
+        const alreadyExists = Array.isArray(items) && items.some((item) => item.filmId === form.filmId);
         if (alreadyExists) {
-            alert('Film sudah ada dalam history');
+            toast.error('Film sudah ada dalam watch history');
             return;
         }
 
-        dispatch(addWatchHistoryItem({
-            ...form,
+        const payload = {
+            filmId: form.filmId,
+            title: form.title,
+            poster: form.poster,
+            status: form.status,
+            rating: form.rating,
+            note: form.note,
             userId: user.id,
             watchedAt: new Date().toISOString(),
-        }));
+        };
+
+        if (isSeries) {
+            payload.currentEpisode = form.currentEpisode;
+            payload.totalEpisodes = form.totalEpisodes;
+        }
+
+        dispatch(addWatchHistoryItem(payload));
+        toast.success('Film ditambahkan ke watch history');
         setForm({
             filmId: '',
             title: '',
@@ -89,15 +103,27 @@ function WatchHistoryPage() {
     };
 
         const startEdit = (item) => {
-        setEditingId(item.id);
+        setEditingId(item.filmId);
         setEditForm({ ...item });
     };
 
         const handleSaveEdit = () => {
+            if (!editingId){
+                toast.error('Invalid item')
+                return;
+            }
+
             dispatch(editWatchHistoryItem({
                 id: editingId,
                 historyData: editForm,
-            }));
+            }))
+            .then(() => {
+                toast.success("Watch history updated");
+            })
+            .catch(() => {
+                toast.error("Gagal update watch history");
+            })
+
             setEditingId(null);
             setEditForm({});
         };
@@ -107,9 +133,15 @@ function WatchHistoryPage() {
             setEditForm({});
         };
 
-         const handleDelete = (id) => {
+         const handleDelete = (item) => {
         if (window.confirm('Hapus item ini dari watch history?')) {
-            dispatch(deleteWatchHistoryItem(id));
+            dispatch(deleteWatchHistoryItem(item))
+                .then(() => {
+                    toast.success('Item berhasil dihapus');
+                })
+                .catch(() => {
+                    toast.error('Gagal menghapus item');
+                })
         }
     };
 
@@ -293,7 +325,7 @@ function WatchHistoryPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {filteredItems.map((item) => {
                             const status = getStatusBadge(item.status);
-                            const isEditing = editingId === item.id;
+                            const isEditing = editingId === item.filmId;
 
                             return (
                                 <div
@@ -325,9 +357,12 @@ function WatchHistoryPage() {
                                         </p>
 
                                         {/* Episode */}
-                                        <p className="text-white/50 text-xs mt-1">
-                                            Ep {item.currentEpisode}/{item.totalEpisodes}
-                                        </p>
+                                        {item.totalEpisodes && item.totalEpisodes > 1 && (
+                                            <p className="text-white/50 text-xs mt-1">
+                                                Ep {item.currentEpisode}/{item.totalEpisodes}
+                                            </p>
+                                        )}
+                                        
 
                                         {/* Note */}
                                         {item.note && (
@@ -340,14 +375,8 @@ function WatchHistoryPage() {
                                         {isEditing ? (
                                             <div className="mt-3 space-y-2">
                                                 <select
-                                                    value={(e) => {
-                                                        const raw = e.target.value;
-                                                        if (raw === '') {
-                                                            setEditForm({...editForm, rating: ''});
-                                                            return;
-                                                        }
-                                                        setEditForm({...editForm, rating: parseInt(raw, 10)});
-                                                    }}
+                                                    value={editForm.status}
+                                                    onChange={(e) => setEditForm({...editForm, status: e.target.value})}
                                                     className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs"
                                                 >
                                                     {statusOptions.map((opt) => (
@@ -356,6 +385,16 @@ function WatchHistoryPage() {
                                                         </option>
                                                     ))}
                                                 </select>
+                                                <input 
+                                                    type="text"
+                                                    value={editForm.note || ''}
+                                                    onChange={(e) => setEditForm ({
+                                                        ...editForm,
+                                                        note: e.target.value
+                                                    })}
+                                                    placeholder="Catatan ..."
+                                                    className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs"
+                                                />
                                                 <input
                                                     type="number"
                                                     min="1"
@@ -393,7 +432,7 @@ function WatchHistoryPage() {
                                                     Edit
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(item.id)}
+                                                    onClick={() => handleDelete(item)}
                                                     className="flex-1 text-xs bg-red-500/20 text-red-400
                                                                hover:bg-red-500/30 rounded py-1 transition-colors"
                                                 >

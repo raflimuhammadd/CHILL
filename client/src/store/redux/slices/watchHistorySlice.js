@@ -50,10 +50,10 @@ export const editWatchHistoryItem = createAsyncThunk(
 
 export const deleteWatchHistoryItem = createAsyncThunk(
     'watchHistory/deleteWatchHistoryItem',
-    async (id, {rejectWithValue}) => {
+    async (item, {rejectWithValue}) => {
         try {
-            await deleteWatchHistory(id);
-            return id;
+            await deleteWatchHistory(item.filmId);
+            return item;
         } catch (error) {
             return rejectWithValue(error.message);
         }
@@ -77,7 +77,7 @@ const watchHistorySlice = createSlice({
             })
             .addCase(fetchWatchHistory.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload;
+                state.items = Array.isArray(action.payload) ? action.payload : [];
             })
             .addCase(fetchWatchHistory.rejected, (state, action) => {
                 state.loading = false;
@@ -91,7 +91,9 @@ const watchHistorySlice = createSlice({
             })
             .addCase(addWatchHistoryItem.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items.push(action.payload);
+                if (action.payload?.id) {
+                    state.items.push(action.payload);
+                }
             })
             .addCase(addWatchHistoryItem.rejected, (state, action) => {
                 state.loading = false;
@@ -106,7 +108,7 @@ const watchHistorySlice = createSlice({
             .addCase(editWatchHistoryItem.fulfilled, (state, action) => {
                 state.loading = false;
                 const index = state.items.findIndex(
-                    (item) => item.id === action.payload.id
+                    (item => item.id === action.payload?.id)
                 );
                 if (index !== -1) {
                     state.items[index] = action.payload;
@@ -125,7 +127,7 @@ const watchHistorySlice = createSlice({
             .addCase(deleteWatchHistoryItem.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = state.items.filter(
-                    (item) => item.id !== action.payload
+                    (item) => item.id !== action.payload.id
                 );
             })
             .addCase(deleteWatchHistoryItem.rejected, (state, action) => {

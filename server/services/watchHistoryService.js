@@ -49,7 +49,12 @@ class WatchHistoryService {
         // 2. Validasi episode_id (kalau series)
         let episodeId = null;
         if (data.currentEpisode && contentId) {
-            episodeId = await this._getEpisodeId(contentId, data.currentEpisode);
+            try {
+                episodeId = await this._getEpisodeId(contentId, data.currentEpisode);
+            } catch(error) {
+                console.log(`[WatchHistory] Episode ${data.currentEpisode} not found for 
+                    content ${contentId} - treating as movie (episodeId=null)`);
+            }
         }
 
         // 3. Validasi rating
@@ -122,8 +127,13 @@ class WatchHistoryService {
         }
         if (data.note !== undefined) updates.note = data.note;
         if (data.status !== undefined) updates.status = data.status;
-        if (data.currentEpisode !== undefined) {
+        if (data.currentEpisode) {
             const contentIdInt = await this._getContentIdBySlug(contentId);
+            try {
+                updates.episode_id = await this._getEpisodeId(contentIdInt, data.currentEpisode);
+            } catch (error) {
+                console.log(`[WatchHistory] Episode ${data.currentEpisode} not found for content ${contentId} - keeping episodeId unchanged`)
+            }
             updates.episode_id = await this._getEpisodeId(contentIdInt, data.currentEpisode);
         }
         if (data.progressSeconds !== undefined) updates.progress_seconds = data.progressSeconds;
@@ -159,14 +169,21 @@ class WatchHistoryService {
     /**
      * Helper: Get content_id from slug
      */
-    async _getContentIdBySlug(slug) {
+    async _getContentIdBySlug(identifier) {
+        if (!isNaN(parseInt(identifier))) {
+            const [rows] = await db.query(
+                'SELECT id, slug FROM contents WHERE id = ?',
+                [identifier]
+            );
+            if (rows.length === 0) throw new NotFoundError(MESSAGES.CONTENT_NOT_FOUND);
+            return rows[0].id;
+        }
+
         const [rows] = await db.query(
             'SELECT id FROM contents WHERE slug = ? AND deleted_at IS NULL',
-            [slug]
+            [identifier]
         );
-        if (rows.length === 0) {
-            throw new NotFoundError(MESSAGES.CONTENT_NOT_FOUND);
-        }
+        if (rows.length === 0) throw new NotFoundError(MESSAGES.CONTENT_NOT_FOUND);
         return rows[0].id;
     }
 
