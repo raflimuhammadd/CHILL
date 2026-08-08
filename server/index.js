@@ -33,6 +33,13 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({
+            success: false,
+            message: 'Route GET /api not found',
+            hint: 'Check API documentation at GET /api/health'
+        });
+    }
     res.json({
         name: 'Chill Streams API',
         version: '1.0.0',
@@ -83,19 +90,24 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log('');
-    console.log('CHILL STREAMS API SERVER');
-    console.log('===========================================');
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Local: http://localhost:${PORT}`);
-    console.log(`Health: http://localhost:${PORT}/api/health`);
-    console.log(`API Info: http://localhost:${PORT}/api`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`CORS Origin: ${process.env.CLIENT_URL}`);
-    console.log('============================================');
-    console.log('');
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log('');
+        console.log('CHILL STREAMS API SERVER');
+        console.log('===========================================');
+        console.log(`Server running on port ${PORT}`);
+        console.log(`Local: http://localhost:${PORT}`);
+        console.log(`Health: http://localhost:${PORT}/api/health`);
+        console.log(`API Info: http://localhost:${PORT}/api`);
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`CORS Origin: ${process.env.CLIENT_URL}`);
+        console.log('============================================');
+        console.log('');
+    });
+}
+
+module.exports = app;
+
 
 process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');

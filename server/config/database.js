@@ -13,7 +13,7 @@ const poolConfig = {
     database: process.env.DB_NAME,
 
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: parseInt(process.env.DB_POOL_LIMIT, 10) || 10,
     queueLimit: 0,
 
     charset: 'utf8mb4',
