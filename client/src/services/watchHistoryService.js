@@ -1,9 +1,7 @@
 import apiClient from "./client";
 
-export const getWatchHistory = async (userId) => {
-    const response = await apiClient.get('/watch-history', {
-        params: { userId }
-    });
+export const getWatchHistory = async () => {
+    const response = await apiClient.get('/watch-history',);
     return response.data;
 };
 
@@ -12,12 +10,12 @@ export const addWatchHistory = async (historyData) => {
     return response.data;
 };
 
-export const updateWatchHistory = async (id, historyData) => {
-    const response = await apiClient.put(`/watch-history/${id}`, historyData);
+export const updateWatchHistory = async (contentId, historyData) => {
+    const response = await apiClient.patch(`/watch-history/${contentId}`, historyData);
     return response.data;
 };
 
-export const deleteWatchHistory = async (id) => {
-    const response = await apiClient.delete(`/watch-history/${id}`);
+export const deleteWatchHistory = async (contentId) => {
+    const response = await apiClient.delete(`/watch-history/${contentId}`);
     return response.data;
 };

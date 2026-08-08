@@ -57,6 +57,7 @@ app.get('/api', (req, res) => {
 app.use('/api/genres', require('./routes/genreRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/watch-history', require('./routes/watchHistoryRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({
