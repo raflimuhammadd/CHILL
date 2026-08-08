@@ -24,7 +24,7 @@ class WatchHistoryService {
                 wh.status,
                 wh.progress_seconds AS progressSeconds,
                 wh.duration_seconds AS durationSeconds,
-                wh.completed,
+                wh.completed, 
                 wh.last_watched_at AS watchedAt,
                 wh.created_at AS createdAt
             FROM watch_history wh
@@ -103,19 +103,18 @@ class WatchHistoryService {
     /**
      * Update watch history (rating, note, status, episode)
      */
-    async updateWatchHistory(userId, contentId, data) {
+    async updateWatchHistory(userId, id, data) {
         // Cari watch history record
-        const [rows] = await db.query(`
-            SELECT wh.id FROM watch_history wh
-            JOIN contents c ON wh.content_id = c.id
-            WHERE wh.user_id = ? AND c.slug = ?
-        `, [userId, contentId]);
+        const [rows] = await db.query(
+            'SELECT id, content_id AS contentId FROM watch_history WHERE id = ? AND user_id = ?',
+        [id, userId]);
 
         if (rows.length === 0) {
             throw new NotFoundError(MESSAGES.WATCH_HISTORY_NOT_FOUND);
         }
 
         const historyId = rows[0].id;
+        const contentId = rows[0].contentId;
 
         // Update fields
         const updates = {};
@@ -136,7 +135,6 @@ class WatchHistoryService {
             }
             updates.episode_id = await this._getEpisodeId(contentIdInt, data.currentEpisode);
         }
-        if (data.progressSeconds !== undefined) updates.progress_seconds = data.progressSeconds;
         if (data.durationSeconds !== undefined) updates.duration_seconds = data.durationSeconds;
 
         // Build dynamic UPDATE
@@ -152,12 +150,10 @@ class WatchHistoryService {
     /**
      * Delete watch history
      */
-    async deleteWatchHistory(userId, contentId) {
-        const [result] = await db.query(`
-            DELETE wh FROM watch_history wh
-            JOIN contents c ON wh.content_id = c.id
-            WHERE wh.user_id = ? AND c.slug = ?
-        `, [userId, contentId]);
+    async deleteWatchHistory(userId, id) {
+        const [result] = await db.query(
+            'DELETE FROM watch_history WHERE id = ? AND user_id = ?',
+            [id, userId]);
 
         if (result.affectedRows === 0) {
             throw new NotFoundError(MESSAGES.WATCH_HISTORY_NOT_FOUND);
