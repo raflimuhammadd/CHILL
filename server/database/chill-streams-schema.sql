@@ -249,6 +249,14 @@ CREATE TABLE content_recommendations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Content recommendations';
 
+ALTER TABLE watch_history 
+ADD COLUMN rating TINYINT UNSIGNED COMMENT 'User rating 1-10' AFTER episode_id,
+ADD COLUMN note TEXT COMMENT 'User notes' AFTER rating,
+ADD COLUMN status ENUM('watching', 'completed', 'on_hold') DEFAULT 'watching' AFTER note;
+
+-- Add index for status filtering
+CREATE INDEX idx_watch_history_status ON watch_history(status);
+
 -- ============================================================================
 -- STEP 3: CREATE INDEXES
 -- Purpose: Optimize query performance
@@ -326,3 +334,4 @@ INSERT INTO users (email, username, password_hash, full_name, is_premium) VALUES
 -- ============================================================================
 -- END OF SCHEMA
 -- ============================================================================
+

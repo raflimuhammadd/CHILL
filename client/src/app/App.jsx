@@ -23,8 +23,8 @@ import Toaster from 'react-hot-toast';
 function App() {
   return (
     <BrowserRouter>
-    <ScrollToTop/>
     <Toaster position="top-right" gutter={8} containerClassName="mb-4"/>
+    <ScrollToTop/>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
