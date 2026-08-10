@@ -43,7 +43,7 @@ class GenreService {
                 throw new Error (`Slug '${slug}' already exists`);
             }
             const [result] = await db.query(
-                '`INSERT INTO` genres (name, slug, created_at) VALUES (?, ?, NOW())', [name.trim(), slug]
+                'INSERT INTO genres (name, slug, created_at) VALUES (?, ?, NOW())', [name.trim(), slug]
             );
             return await this.getGenreById(result.insertId);
         } catch (error) {
