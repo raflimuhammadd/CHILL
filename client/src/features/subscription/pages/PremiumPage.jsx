@@ -22,8 +22,9 @@ function PremiumPage() {
   return (
     <div className="min-h-screen bg-chill-dark text-white flex flex-col mt-20">
       <Navbar />
-    
-    <section className="why-subscribe container-responsive pt-16 md:pt-24 pb-12 md:pb-16">
+      <div className="w-full max-w-450 mx-auto px-[clamp(0.5rem,2vw,1.5rem)]">
+
+      <section className="why-subscribe container-responsive pt-16 md:pt-24 pb-12 md:pb-16">
         <div className="max-w-4xl mx-auto">
             <h2 className="text-center text-3xl md:text-5xl font-bold mb-6 md:mb-8">
             Kenapa Harus Berlangganan?
@@ -41,11 +42,11 @@ function PremiumPage() {
                 <FeatureCard icon="subtitle" title="Subtitle Untuk Konten Pilihan" />
             </div>
         </div>
-    </section>
+      </section>
 
       <main className="flex-1 pt-24 md:pt-28">
         <section className="flex-1 pb-16 md:pb-20">
-            <div className="bg-chill-gray rounded-none md:rounded-t-4xl mx-0 md:mx-4 lg:mx-8">
+            <div className="bg-chill-gray rounded-none md:rounded-3xl mx-0 md:mx-4 lg:mx-32">
                 <div className="container-responsive pt-12 md:pt-16 pb-12 md:pb-20">
                 <div className="max-w-6xl mx-auto">
                     <h1 className="text-3xl md:text-5xl font-bold mb-3 md:mb-4">
@@ -71,6 +72,7 @@ function PremiumPage() {
         </section>
       </main>
 
+      </div>
       <Footer />
     </div>
   );

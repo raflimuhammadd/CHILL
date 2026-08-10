@@ -91,6 +91,8 @@ function PaymentPage() {
     return (
         <div className="min-h-screen bg-chill-dark text-white flex flex-col">
             <Navbar />
+            <div className="w-full max-w-450 mx-auto px-[clamp(0.5rem,2vw,1.5rem)]">
+
 
             <main className="container-responsive pt-24 md:pt-40 pb-16 md:pb-24">
                 {paymentStatus === 'waiting' && (
@@ -317,6 +319,7 @@ function PaymentPage() {
                 </div> 
                 </div>
             </main>
+            </div>
             <Footer/>
         </div>
     )
