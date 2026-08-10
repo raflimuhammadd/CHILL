@@ -92,17 +92,13 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log('');
         console.log('CHILL STREAMS API SERVER');
-        console.log('===========================================');
+        console.log('-----------------------');
         console.log(`Server running on port ${PORT}`);
         console.log(`Local: http://localhost:${PORT}`);
         console.log(`Health: http://localhost:${PORT}/api/health`);
         console.log(`API Info: http://localhost:${PORT}/api`);
         console.log(`Environment: ${process.env.NODE_ENV}`);
-        console.log(`CORS Origin: ${process.env.CLIENT_URL}`);
-        console.log('============================================');
-        console.log('');
     });
 }
 
