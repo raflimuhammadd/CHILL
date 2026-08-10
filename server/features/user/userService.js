@@ -1,8 +1,8 @@
-const db = require('../config/database');
 const bcrypt = require('bcryptjs');
-const { NotFoundError, ConflictError, ValidationError } = require('../utils/error');
-const { MESSAGES } = require('../utils/constant');
-const { validateEmail } = require('../utils/validators');
+const db = require('../../config/database');
+const { NotFoundError, ConflictError, ValidationError } = require('../../utils/error');
+const { MESSAGES } = require('../../utils/constant');
+const { validateEmail } = require('../../utils/validators');
 
 class UserService {
     async getProfile(userId) {
