@@ -1,8 +1,8 @@
-const db = require('../config/database');
+const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {ValidationError, ConflictError} = require('../utils/error');
-const {validateUsername, validatePassword} = require('../utils/validators');
+const {ValidationError, ConflictError} = require('../../utils/error');
+const {validateUsername, validatePassword} = require('../../utils/validators');
 
 class AuthService {
     async register ({username, password}) {
