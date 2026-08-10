@@ -63,6 +63,7 @@ app.get('/api', (req, res) => {
 // Routes
 app.use('/api/genres', require('./routes/genreRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/contents', require('./routes/contentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/watch-history', require('./routes/watchHistoryRoutes'));
 
