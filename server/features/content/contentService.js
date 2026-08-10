@@ -1,7 +1,7 @@
 const db = require('../config/database');
-const {ValidationError, NotFoundError} = require('../utils/error');
-const { MESSAGES } = require('../utils/constant');
-const {validateId} = require('../utils/validators');
+const {ValidationError, NotFoundError} = require('../../utils/error');
+const { MESSAGES } = require('../../utils/constant');
+const {validateId} = require('../../utils/validators');
 
 class ContentService {
      _mapContent(row) {

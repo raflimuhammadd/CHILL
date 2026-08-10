@@ -1,5 +1,5 @@
-const authService = require('../services/authService');
-const {success} = require('../utils/apiResponse');
+const authService = require('./authService');
+const {success} = require('../../utils/apiResponse');
 
 exports.register = async (req, res, next) => {
     try {

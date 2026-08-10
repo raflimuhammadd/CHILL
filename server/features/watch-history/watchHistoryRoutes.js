@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const watchHistoryController = require('../controllers/watchHistoryController');
-const authMiddleware = require('../middleware/authMiddleware');
+const watchHistoryController = require('../../features/watch-history/watchHistoryController');
+const authMiddleware = require('../../middleware/authMiddleware');
 
 // All routes require authentication
 router.get('/', authMiddleware, watchHistoryController.getWatchHistory);

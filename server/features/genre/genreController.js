@@ -1,5 +1,5 @@
-const genreService = require('../services/genreService');
-const {success} = require('../utils/apiResponse');
+const genreService = require('../genre/genreService');
+const {success} = require('../../utils/apiResponse');
 
 
 exports.getAllGenres = async (req, res, next) => {

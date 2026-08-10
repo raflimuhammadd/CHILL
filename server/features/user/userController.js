@@ -1,6 +1,6 @@
-const userService = require('../services/userService');
-const {success} = require('../utils/apiResponse');
-const { NotFoundError } = require('../utils/error');
+const userService = require('./userService');
+const {success} = require('../../utils/apiResponse');
+const { NotFoundError } = require('../../utils/error');
 
 
 exports.getMe = async (req, res, next) => {

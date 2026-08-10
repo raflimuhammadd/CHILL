@@ -1,9 +1,7 @@
+const db = require('./config/database');
 const express = require('express');
 const cors = require('cors');
 require ('dotenv').config();
-
-const db = require('./config/database');
-const { getGenreById } = require('./services/genreService');
 
 const app = express();
 app.use(cors({
@@ -61,11 +59,11 @@ app.get('/api', (req, res) => {
 });
 
 // Routes
-app.use('/api/genres', require('./routes/genreRoutes'));
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/contents', require('./routes/contentRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/watch-history', require('./routes/watchHistoryRoutes'));
+app.use('/api/genres', require('./features/genre/genreRoutes'));
+app.use('/api/auth', require('./features/auth/authRoutes'));
+app.use('/api/contents', require('./features/content/contentRoutes'));
+app.use('/api/users', require('./features/user/userRoutes'));
+app.use('/api/watch-history', require('./features/watch-history/watchHistoryRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({

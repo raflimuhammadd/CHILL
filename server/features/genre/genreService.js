@@ -1,6 +1,6 @@
-const db = require('../config/database');
-const {ValidationError, ConflictError, NotFoundError} = require('../utils/error');
-const { MESSAGES } = require('../utils/constant');
+const db = require('../../config/database');
+const {ValidationError, ConflictError, NotFoundError} = require('../../utils/error');
+const { MESSAGES } = require('../../utils/constant');
 
 
 class GenreService {

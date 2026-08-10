@@ -1,5 +1,5 @@
-const watchHistoryService = require('../services/watchHistoryService');
-const { success } = require('../utils/apiResponse');
+const watchHistoryService = require('./watchHistoryService');
+const { success } = require('../../utils/apiResponse');
 
 
 exports.getWatchHistory = async (req, res, next) => {
