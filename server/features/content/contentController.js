@@ -1,5 +1,5 @@
-const contentService = require('../services/contentService');
-const { success } = require('../utils/apiResponse');
+const contentService = require('../../services/contentService');
+const { success } = require('../../utils/apiResponse');
 
 exports.getAllContents = async (req, res, next) => {
     try {
