@@ -1,4 +1,4 @@
-const genreService = require('./genreService');
+const genreService = require('../genre/genreService');
 const {success} = require('../../utils/apiResponse');
 
 

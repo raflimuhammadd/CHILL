@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const genreController = require('../../controllers/genreController');
+const genreController = require('../../features/genre/genreController');
 
 // Genre routes
 router.get('/', genreController.getAllGenres);
