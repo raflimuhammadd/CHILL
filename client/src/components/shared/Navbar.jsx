@@ -91,11 +91,8 @@ function Navbar() {
                   3
                 </span>
               </button>
-
-
               <ProfileDropdown />
             </div>
-
             <div className="sm:hidden flex items-center gap-3">
               <ProfileDropdown />
             </div>
@@ -121,7 +118,6 @@ function Navbar() {
                 navigate('/login');
               }}
     />
-
     </>
   );
 }

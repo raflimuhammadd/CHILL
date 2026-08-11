@@ -103,7 +103,7 @@ function WatchHistoryPage() {
     };
 
         const startEdit = (item) => {
-        setEditingId(item.filmId);
+        setEditingId(item.id);
         setEditForm({ ...item });
     };
 
@@ -325,7 +325,7 @@ function WatchHistoryPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {filteredItems.map((item) => {
                             const status = getStatusBadge(item.status);
-                            const isEditing = editingId === item.filmId;
+                            const isEditing = editingId === item.id;
 
                             return (
                                 <div

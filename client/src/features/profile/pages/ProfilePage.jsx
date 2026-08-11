@@ -21,11 +21,9 @@ function ProfilePage() {
   const isSubscribed = Boolean(user?.isPremium);
   const [avatarBase64, setAvatarBase64] = useState(null);
 
-
   useEffect(() => {
     if (!user) navigate('/login');
   }, [user, navigate]);
-
   if (!user) {
     return (
       <div className="min-h-screen bg-chill-dark flex items-center justify-center">
@@ -56,18 +54,16 @@ function ProfilePage() {
                   avatarSrc={avatarSrc}
                   onAvatarChange={setAvatarBase64} 
                 />
-              <ProfileForm 
+              <ProfileForm
                   user={user}
-                  onSave={handleSave} 
+                  onSave={handleSave}
               />
             </div>
-
             <div className="order-1 md:order-2 md:pt-16">
               <SubscriptionCard isSubscribed={isSubscribed} plan={user?.subscriptionPlan} />
             </div>
           </div>
         </section>
-
         <section className="container-responsive pb-12 md:pb-20">
           <div className="mb-5 md:mb-8 flex items-center justify-between">
             <h2 className="text-3xl md:text-5xl font-bold text-white">
@@ -86,6 +82,5 @@ function ProfilePage() {
     </div>
   );
 }
-
 
 export default ProfilePage;

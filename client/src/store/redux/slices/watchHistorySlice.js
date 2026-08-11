@@ -52,7 +52,7 @@ export const deleteWatchHistoryItem = createAsyncThunk(
     'watchHistory/deleteWatchHistoryItem',
     async (item, {rejectWithValue}) => {
         try {
-            await deleteWatchHistory(item.filmId);
+            await deleteWatchHistory(item.id);
             return item;
         } catch (error) {
             return rejectWithValue(error.message);
