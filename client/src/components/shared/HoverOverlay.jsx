@@ -14,8 +14,7 @@ function HoverOverlay({film, variant = 'default'}) {
     const handlePlay = (e) => {
         e.stopPropagation();
         if (film.isBlocked) {
-            navigate('/premium');
-            return;
+            navigate(`/watch/${film.id}`);
         }
         navigate(`/watch/${film.id}`);
     };

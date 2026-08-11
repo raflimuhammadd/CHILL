@@ -27,8 +27,7 @@ function Hero({featuredFilm}) {
 
     const handlePlayClick = () => {
         if (featuredFilm?.isBlocked) {
-            navigate('/premium');
-            return;
+            navigate(`/watch/${featuredFilm.id}`);
         }
         navigate(`/watch/${featuredFilm.id}`);
     };

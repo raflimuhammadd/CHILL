@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+ import { useState, useEffect, useRef, useCallback } from 'react';
 import { playerStore } from '../store/playerStore';
 import PlayerControls from './PlayerControls';
 import PremiumGateModal from './PremiumGateModal';

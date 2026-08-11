@@ -51,8 +51,7 @@ function FilmDetailModal() {
   const handlePlayClick = () => {
       closeModal();
       if (film.isBlocked) {
-          navigate('/premium');
-          return;
+          navigate(`/watch/${film.id}`);
       }
       navigate(`/watch/${film.id}`);
   };

@@ -4,7 +4,7 @@ const { MESSAGES } = require('../../utils/constant');
 const {validateId} = require('../../utils/validators');
 
 class ContentService {
-     _mapContent(row) {
+    _mapContent(row) {
         return {
             id: row.id,
             slug: row.slug,
@@ -23,8 +23,8 @@ class ContentService {
             rating: row.rating,
             isPremium: Boolean(row.is_premium_only),
             topRank: row.top_rank,
-            isNewRelease: row.is_new_release,
-            hasNewEpisode: row.has_new_episode,
+            isNewRelease: Boolean(row.is_new_release),
+            hasNewEpisode: Boolean(row.has_new_episode),
             genres: row.genres ? row.genres.split(', ').filter(Boolean) : [],
             createdAt: row.created_at,
         };

@@ -10,9 +10,10 @@ export const usePremiumAccess = (films) => {
 
         return films.map((film) => ({
             ...film,
-            isBlocked: Boolean(film.isPremium && !isPremiumUser),
+            isBlocked: Boolean((film.isPremium ?? false) && !isPremiumUser),
+            
             blockReason:
-                film.isPremium && !isPremiumUser ? 'premium_required' : null,
+                (film.isPremium ?? false) && !isPremiumUser ? 'premium_required' : null,
         }));
     }, [films, isPremiumUser]);
 
