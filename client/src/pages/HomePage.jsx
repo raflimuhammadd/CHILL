@@ -1,116 +1,84 @@
-import {Navbar, Hero, Footer} from '../components';
-import filmData from '../data/filmData';
-import {ContentSection, FilmDetailModal} from '../components';
-import {useDetailModal} from '../hooks/useDetailModal';
+import { useMemo } from 'react';
+import { Navbar, Hero, Footer, ContentSection, FilmDetailModal } from '../components';
+import { useFilmData } from '../hooks/useFilmData';
+import { usePremiumAccess } from '../hooks/usePremiumAccess';
+import { useDetailModal } from '../hooks/useDetailModal';
 
 function HomePage() {
-    const featuredFilm = filmData['card-duty'];
+    const { films, loading } = useFilmData();
+    const { decoratedFilms } = usePremiumAccess(films);
     useDetailModal();
 
-    // section 1
-    const continueWatching = [
-        filmData['card-dont-look'],
-        filmData['card-batman'],
-        filmData['card-blue-lock'],
-        filmData['card-otto'],
-        filmData['card-ted-lasso'],
-        filmData['card-guardian'],
-        filmData['card-quantumania']
-    ]
+    const continueWatching = useMemo(() => {
+        if (!decoratedFilms.length) return [];
+        return decoratedFilms.slice(0, 6).map((film, idx) => ({
+            ...film,
+            progress: [12, 30, 45, 60, 75, 90][idx] || 20,
+        }));
+    }, [decoratedFilms]);
 
-    // Section 2: Top Rating (Portrait)
-    const topRating = [
-        filmData['card-suzume'],
-        filmData['card-jurassic'],
-        filmData['card-my-perfect'],
-        filmData['card-alice'],
-        filmData['card-megan'],
-        filmData['card-mermaid'],
-        filmData['card-quantumania'],
-        filmData['card-sonic-2'],
-        filmData['card-happiness'],
-        filmData['card-stuart'],
-        filmData['card-rio'],
-        filmData['card-big-hero-6'],
-        filmData['card-tomorrow']
-    ];
+    const topRating = useMemo(() => {
+        if (!decoratedFilms.length) return [];
+        return [...decoratedFilms]
+            .sort((a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0))
+            .slice(0, 12);
+    }, [decoratedFilms]);
 
-    // Section 3: Film Trending (Portrait)
-    const trending = [
-        filmData['card-duty'],
-        filmData['card-avatar-2'],
-        filmData['card-fast-x'],
-        filmData['card-miles'],
-        filmData['card-quantumania'],
-        filmData['card-sonic-2'],
-        filmData['card-quantumania'],
-        filmData['card-sonic-2'],
-        filmData['card-happiness'],
-        filmData['card-stuart'],
-        filmData['card-rio'],
-        filmData['card-big-hero-6'],
-        filmData['card-tomorrow']
-    ];
+    const trending = useMemo(() => {
+        if (!decoratedFilms.length) return [];
+        return [...decoratedFilms]
+            .filter((f) => f.topRank)
+            .sort((a, b) => (a.topRank || 999) - (b.topRank || 999))
+            .slice(0, 12);
+    }, [decoratedFilms]);
 
-    // Section 4: Rilis Baru (Portrait)
-    const newReleases = [
-        filmData['card-happiness'],
-        filmData['card-stuart'],
-        filmData['card-rio'],
-        filmData['card-big-hero-6'],
-        filmData['card-tomorrow'],
-        filmData['card-suzume'],
-        filmData['card-quantumania'],
-        filmData['card-sonic-2'],
-        filmData['card-happiness'],
-        filmData['card-stuart'],
-        filmData['card-rio'],
-        filmData['card-big-hero-6'],
-        filmData['card-tomorrow']
-    ];
+    const newReleases = useMemo(() => {
+        if (!decoratedFilms.length) return [];
+        return decoratedFilms.filter((f) => f.isNewRelease).slice(0, 12);
+    }, [decoratedFilms]);
 
+    const featuredFilm = decoratedFilms.find((f) => f.slug === 'spidey-brand-new-day') || decoratedFilms[0];
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-chill-dark flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-chill-dark">
             <Navbar />
-
-            <Hero featuredFilm={featuredFilm}/>
-
-            {/* content */}
+            <Hero featuredFilm={featuredFilm} />
             <main className="bg-chill-dark relative z-20">
-                {/* section 1 */}
-                <ContentSection 
+                <ContentSection
                     title="Melanjutkan Tontonan Film dan Series"
-                    films={continueWatching}
-                    variant='landscape'
+                    items={continueWatching}
+                    variant="landscape"
                 />
-
-                {/* section 2 */}
-                <ContentSection 
+                <ContentSection
                     title="Top Rating Film dan Series Hari ini"
-                    films={topRating}
-                    variant='portrait'
+                    items={topRating}
+                    variant="portrait"
                 />
-
-                {/* section 3 */}
-                <ContentSection 
+                <ContentSection
                     title="Film dan Series Trending"
-                    films={trending}
-                    variant='portrait'
+                    items={trending}
+                    variant="portrait"
                 />
-
-                {/* section 4 */}
-                <ContentSection 
-                    title="Rilis Baru"
-                    films={newReleases}
-                    variant='portrait'
-                />
+                {newReleases.length > 0 && (
+                    <ContentSection
+                        title="Rilis Baru"
+                        items={newReleases}
+                        variant="portrait"
+                    />
+                )}
             </main>
             <Footer />
-
             <FilmDetailModal />
         </div>
-    )
+    );
 }
 
 export default HomePage;

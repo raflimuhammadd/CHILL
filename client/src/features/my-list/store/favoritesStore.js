@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import filmData from "../../../data/filmData";
 
 const useFavoritesStore = create((set, get) => ({
     // state
@@ -38,15 +37,16 @@ const useFavoritesStore = create((set, get) => ({
 
 
 
-    getFavoriteItems: () => {
+    getFavoriteItems: (allFilms = []) => {
         const {favorites, favoriteOverrides} = get();
         return favorites
             .map(id => {
-                const film = Object.values(filmData).find(f => f.id === id);
+                const film = allFilms.find(f => f.id === id);
                 if (!film) return null;
                 const override = favoriteOverrides[id] || {};
                 return {...film, ...override};
             })
+            .filter(Boolean);
     }
 
     // getFavoriteItems: () => {

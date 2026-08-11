@@ -6,6 +6,11 @@ const icons = {
     <path d="M11 5L6 9H2v6h4l5 4V5z" />
     </>
   ),
+  lock: (
+    <>
+      <path d="M40,18H36V13A11,11,0,0,0,25,2H23A11,11,0,0,0,12,13v5H8a2,2,0,0,0-2,2V44a2,2,0,0,0,2,2H40a2,2,0,0,0,2-2V20A2,2,0,0,0,40,18ZM25.9,33.4v2.5a2,2,0,0,1-4,0V33.4a4,4,0,1,1,4,0ZM32,18H16V13a7,7,0,0,1,7-7h2a7,7,0,0,1,7,7Z"></path>
+    </>
+  ),
   search: (
      <>
         <circle cx="11" cy="11" r="8"/>
@@ -310,6 +315,7 @@ const viewBoxMap = {
       bca: "0 0 24 24",
       skipBack: "0 0 43 43",
       skipForward: "0 0 43 43",
+      lock: "0 0 48 48",
 }
 
 function Icon({ name, className = "h-5 w-5", ...props }) {
@@ -326,7 +332,7 @@ return (
         ['visa', 'mastercard', 'jcb', 'american', 'bca'].includes(name) 
           ? 'none' 
           : ['star', 'play', 'premium', 'user', 'download', 'fourK', 'ads', 'platforms', 'streams', 'subtitle', 'skipBack', 'skipForward', 'nextEps',
-            'listEps','speed','fullscreen'
+            'listEps','speed','fullscreen', 'lock'
           ].includes(name) 
           ? 'currentColor' 
           : 'none'
@@ -335,7 +341,7 @@ return (
         ['visa', 'mastercard', 'jcb', 'american', 'bca'].includes(name) 
           ? 'none' 
           : ['star', 'play', 'premium', 'user', 'download', 'fourK', 'ads', 'platforms', 'streams', 'subtitle', 'skipBack', 'skipForward'
-            , 'nextEps','listEps','speed','fullscreen'
+            , 'nextEps','listEps','speed','fullscreen', 'lock'
           ].includes(name) 
           ? 'none' 
           : 'currentColor'

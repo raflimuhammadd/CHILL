@@ -10,7 +10,7 @@ function Hero({featuredFilm}) {
     const [videoError, setVideoError] = useState(false);
 
     useEffect(() => {
-        if (!featuredFilm.youtubeId) return;
+        if (!featuredFilm?.youtubeId) return;
         const timer = setTimeout(() => setShowVideo(true), 2500);
         return () => clearTimeout(timer);
     }, [featuredFilm.youtubeId]);
@@ -23,6 +23,14 @@ function Hero({featuredFilm}) {
     const handleVideoError = () => {
         setVideoError(true);
         console.log('video error');
+    };
+
+    const handlePlayClick = () => {
+        if (featuredFilm?.isBlocked) {
+            navigate('/premium');
+            return;
+        }
+        navigate(`/watch/${featuredFilm.id}`);
     };
     
     return (
@@ -80,7 +88,7 @@ function Hero({featuredFilm}) {
                         <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2 xs:gap-3 sm:gap-4 flex-wrap">
                                 <button
-                                    onClick={() => navigate(`/watch/${featuredFilm.id}`)}
+                                    onClick={handlePlayClick}
                                     className="bg-[#0F1E93] hover:bg-[#09147A] text-white font-semibold
                                     px-2.5 sm:px-8 py-2 sm:py-3 rounded-full transition shrink-0 text-xs sm:text-base"
                                 >

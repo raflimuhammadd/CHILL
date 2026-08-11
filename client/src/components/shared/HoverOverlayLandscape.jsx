@@ -9,6 +9,15 @@ function HoverOverlayLandscape({film}) {
   const favorited = isFavorite(film.id);
   const navigate = useNavigate();
 
+  const handlePlay = (e) => {
+    e.stopPropagation();
+    if (film.isBlocked) {
+        navigate('/premium');
+        return;
+    }
+    navigate(`/watch/${film.id}`);
+  };
+
   const toggleFavorite = (e) => {
     e.stopPropagation(); //prevent card click evnt
     if (favorited) {
@@ -43,19 +52,18 @@ function HoverOverlayLandscape({film}) {
         </button>
 
         <button
-          onClick={(e) => {
-             e.stopPropagation();
-            navigate(`/watch/${film.id}`);
-          }}
+          onClick={handlePlay}
           className="hover-overlay-landscape-button hover-overlay-landscape-button--play 
             w-12 h-12 rounded-full border-2 border-white/50 
             hover:border-white hover:bg-white/15 hover:scale-110 
             transition-all duration-300 flex items-center justify-center text-white"
           aria-label="Play"
         >
-          <Icon name="play" className="h-6 w-6 fill-white" />
+          <Icon
+              name={film.isBlocked ? 'lock' : 'play'}
+              className="h-6 w-6 fill-white"
+          />
         </button>
-
         <button
           onClick={(e) => {
             e.stopPropagation();

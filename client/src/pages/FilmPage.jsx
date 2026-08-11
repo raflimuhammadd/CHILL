@@ -1,92 +1,96 @@
-import {Navbar, Hero, Footer} from '../components';
-import {ContentSection, FilmDetailModal} from '../components';
-import filmData from '../data/filmData';
-import {useDetailModal} from '../hooks/useDetailModal';
-
+import { useMemo } from 'react';
+import { Navbar, Hero, Footer, ContentSection, FilmDetailModal } from '../components';
+import { useFilmData } from '../hooks/useFilmData';
+import { usePremiumAccess } from '../hooks/usePremiumAccess';
+import { useDetailModal } from '../hooks/useDetailModal';
 
 function FilmPage() {
+    const { films, loading } = useFilmData();
+    const { decoratedFilms } = usePremiumAccess(films);
     useDetailModal();
-    // convert data object to arrray
-    const allFilms = Object.values(filmData);
 
-    // filter film only (ambil yg ada totalScreen)
-    const isFilm = (item) => item.duration !== undefined;
+    const allFilms = useMemo(() => {
+        if (!decoratedFilms.length) return [];
+        return decoratedFilms.filter(
+            (item) => item.type === 'movie' || item.duration
+        );
+    }, [decoratedFilms]);
 
-    const items = allFilms.filter(isFilm);
+    const featuredFilm =
+        allFilms.find((film) => film.title?.includes('dooms')) || allFilms[0];
 
-    // used to hero series
-    const featuredFilms = items.find(film => film.title.includes('Avatar')) || items[0];
+    const continueWatchingFilms = useMemo(() => {
+        if (!allFilms.length) return [];
+        const progressValues = [12, 30, 45, 60, 75, 90];
+        return allFilms.slice(0, 10).map((film, index) => ({
+            ...film,
+            progress: progressValues[index] || 20,
+        }));
+    }, [allFilms]);
 
-    // section 1: LanjutTontonan
-    const progressValues = [12, 30, 45, 60, 75, 90];
-    const continueWatchingFilms = items.slice(0, 10).map((film, index) => ({
-        ...film,
-        progress: progressValues[index] || 20
-    }));
+    const popularFilms = useMemo(() => {
+        if (!allFilms.length) return [];
+        return allFilms
+            .filter((film) => film.rating && parseFloat(film.rating) >= 4.5)
+            .slice(0, 10);
+    }, [allFilms]);
 
-    // section 2: Top Rating
-    const popularFilms = items
-        .filter(film => film.rating && parseFloat(film.rating))
-        .slice(0, 10);
+    const topRatingFilms = useMemo(() => {
+        if (!allFilms.length) return [];
+        return [...allFilms]
+            .sort((a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0))
+            .slice(0, 10);
+    }, [allFilms]);
 
-    // section 3: TopRating
-    const topRatingFilms = items
-        .slice()
-        .sort((a, b) => {
-            const aRating = parseFloat(a.rating);
-            const bRating = parseFloat(b.rating);
-            return bRating - aRating;
-        })
-        .slice(0, 10);
+    const trendingFilms = useMemo(() => {
+        if (!allFilms.length) return [];
+        return allFilms
+            .filter((f) => f.topRank)
+            .sort((a, b) => (a.topRank || 999) - (b.topRank || 999))
+            .slice(0, 10);
+    }, [allFilms]);
 
-    // section 4: Trending
-    const trendingFilms = items
-        .filter(s => s.topRank)
-        .sort((a, b) => (a.topRank || 999) - (b.topRank || 999))
-        .slice(0, 10);
+    const newReleaseFilms = useMemo(() => {
+        if (!allFilms.length) return [];
+        return allFilms.filter((film) => film.isNewRelease);
+    }, [allFilms]);
 
-    // section 5: Genre
-    const newReleaseFilms = items.filter((film) => film.isNewRelease);
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-chill-dark flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-chill-dark">
             <Navbar />
-
-            <Hero featuredFilm={featuredFilms} />
-
+            <Hero featuredFilm={featuredFilm} />
             <main className="bg-chill-dark relative z-20 py-8">
                 <div className="space-y-12">
-                    {/* section1: landscape */}
-                    <ContentSection 
+                    <ContentSection
                         title="Melanjutkan Tontonan Film"
                         items={continueWatchingFilms}
                         variant="landscape"
                     />
-
-                    {/* section2: portrait */}
-                    <ContentSection 
+                    <ContentSection
                         title="Film Populer"
                         items={popularFilms}
                         variant="portrait"
                     />
-
-                    {/* section3: portrait */}
-                    <ContentSection 
+                    <ContentSection
                         title="Top Rating Film Hari ini"
                         items={topRatingFilms}
                         variant="portrait"
                     />
-
-                    {/* section4: portrait */}
-                    <ContentSection 
+                    <ContentSection
                         title="Film Trending"
                         items={trendingFilms}
                         variant="portrait"
                     />
-
-                    {/* section5: genre */}
                     {newReleaseFilms.length > 0 && (
-                        <ContentSection 
+                        <ContentSection
                             title="Rilis Baru"
                             items={newReleaseFilms}
                             variant="portrait"
@@ -94,13 +98,10 @@ function FilmPage() {
                     )}
                 </div>
             </main>
-
             <Footer />
-
-            {/* Film Detail Modal */}
             <FilmDetailModal />
         </div>
-    )
+    );
 }
 
 export default FilmPage;

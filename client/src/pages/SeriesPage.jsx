@@ -1,94 +1,96 @@
-import {Navbar, Hero, Footer} from '../components';
-import {ContentSection, SeriesDetailModal} from '../components';
-import filmData from '../data/filmData';
-import {useDetailModal} from '../hooks/useDetailModal';
-
+import { useMemo } from 'react';
+import { Navbar, Hero, Footer, ContentSection, SeriesDetailModal } from '../components';
+import { useFilmData } from '../hooks/useFilmData';
+import { usePremiumAccess } from '../hooks/usePremiumAccess';
+import { useDetailModal } from '../hooks/useDetailModal';
 
 function SeriesPage() {
+    const { films, loading } = useFilmData();
+    const { decoratedFilms } = usePremiumAccess(films);
     useDetailModal();
-    // convert data object to arrray
-    const allFilms = Object.values(filmData);
 
-    // filter series only (ambil yg ada episode)
-    const isSeries = (film) => {
-        return film.episodes && film.episodes.includes('Episode');
-    };
+    const allSeries = useMemo(() => {
+        if (!decoratedFilms.length) return [];
+        return decoratedFilms.filter(
+            (item) => item.type === 'series' || item.totalEpisodes > 0
+        );
+    }, [decoratedFilms]);
 
-    const series = allFilms.filter(isSeries);
+    const featuredSeries =
+        allSeries.find((s) => s.title?.includes('Happiness')) || allSeries[0];
 
-    // used to hero series
-    const featuredSeries = series.find(s => s.title.includes('Happiness')) || series[0];
+    const continueWatchingSeries = useMemo(() => {
+        if (!allSeries.length) return [];
+        const progressValues = [12, 30, 45, 60, 75, 90];
+        return allSeries.slice(0, 10).map((film, index) => ({
+            ...film,
+            progress: progressValues[index] || 20,
+        }));
+    }, [allSeries]);
 
-    // section 1: LanjutTontonan
-    const progressValues = [12, 30, 45, 60, 75, 90];
-    const continueWatchingSeries = series.slice(0, 10).map((film, index) => ({
-        ...film,
-        progress: progressValues[index] || 20
-    }));
+    const popularSeries = useMemo(() => {
+        if (!allSeries.length) return [];
+        return allSeries
+            .filter((s) => s.rating && parseFloat(s.rating) >= 4.5)
+            .slice(0, 10);
+    }, [allSeries]);
 
-    // section 2: Top Rating
-    const popularSeries = series
-        .filter(s => s.rating && parseFloat(s.rating) >= 4.5)
-        .slice(0, 10);
+    const topRatingSeries = useMemo(() => {
+        if (!allSeries.length) return [];
+        return [...allSeries]
+            .sort((a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0))
+            .slice(0, 10);
+    }, [allSeries]);
 
-    // section 3: TopRating
-    const topRatingSeries = series
-        .slice()
-        .sort((a, b) => {
-            const aRating = parseFloat(a.rating);
-            const bRating = parseFloat(b.rating);
-            return bRating - aRating;
-        })
-        .slice(0, 10);
+    const trendingSeries = useMemo(() => {
+        if (!allSeries.length) return [];
+        return allSeries
+            .filter((s) => s.topRank)
+            .sort((a, b) => (a.topRank || 999) - (b.topRank || 999))
+            .slice(0, 10);
+    }, [allSeries]);
 
-    // section 4: Trending
-    const trendingSeries = series
-        .filter(s => s.topRank)
-        .sort((a, b) => (a.topRank || 999) - (b.topRank || 999))
-        .slice(0, 10);
+    const newReleaseSeries = useMemo(() => {
+        if (!allSeries.length) return [];
+        return allSeries.filter((s) => s.isNewRelease);
+    }, [allSeries]);
 
-    // section 5: Genre
-    const newReleaseSeries = series.filter((s) => s.isNewRelease);
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-chill-dark flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-chill-dark">
             <Navbar />
-
             <Hero featuredFilm={featuredSeries} />
-
             <main className="bg-chill-dark relative z-20 py-8">
                 <div className="space-y-12">
-                    {/* section1: landscape */}
-                    <ContentSection 
+                    <ContentSection
                         title="Melanjutkan Tontonan Series"
                         items={continueWatchingSeries}
                         variant="landscape"
                     />
-
-                    {/* section2: portrait */}
-                    <ContentSection 
+                    <ContentSection
                         title="Series Populer"
                         items={popularSeries}
                         variant="portrait"
                     />
-
-                    {/* section3: portrait */}
-                    <ContentSection 
+                    <ContentSection
                         title="Top Rating Series Hari ini"
                         items={topRatingSeries}
                         variant="portrait"
                     />
-
-                    {/* section4: portrait */}
-                    <ContentSection 
+                    <ContentSection
                         title="Series Trending"
                         items={trendingSeries}
                         variant="portrait"
                     />
-
-                    {/* section5: genre */}
                     {newReleaseSeries.length > 0 && (
-                        <ContentSection 
+                        <ContentSection
                             title="Rilis Baru"
                             items={newReleaseSeries}
                             variant="portrait"
@@ -96,13 +98,10 @@ function SeriesPage() {
                     )}
                 </div>
             </main>
-
             <Footer />
-            
-            {/* Series Detail Modal */}
             <SeriesDetailModal />
         </div>
-    )
+    );
 }
 
 export default SeriesPage;

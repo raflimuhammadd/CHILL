@@ -1,38 +1,45 @@
-import { useFavorites } from './useFavorites';
-import filmData from '../data/filmData';
+import { useState, useEffect } from 'react';
+import { contentService } from '../services/contentService';
 
 export const useFilmData = () => {
-  const { getMergedFilm } = useFavorites();
-  
-  // Get single film by ID (merged)
-  const getFilmById = (id) => {
-    return getMergedFilm(id) || null;
-  };
-  
-  // Get all films (merged)
-  const getAllFilms = () => {
-    return Object.keys(filmData).map(key => {
-      const film = filmData[key];
-      return getMergedFilm(film.id) || film;
-    });
-  };
-  
-  // Filter films by criteria (merged)
-  const getFilmsByType = (type) => {
-    const allFilms = getAllFilms();
-    
-    if (type === 'series') {
-      return allFilms.filter(f => f.episodes);
-    }
-    if (type === 'film') {
-      return allFilms.filter(f => f.duration);
-    }
-    return allFilms;
-  };
-  
-  return {
-    getFilmById,
-    getAllFilms,
-    getFilmsByType
-  };
+    const [films, setFilms] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchAllFilms = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const result = await contentService.getAllContents();
+
+                if (!cancelled) {
+                    setFilms(result?.data?.contents || []);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchAllFilms();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    return {
+        films,
+        loading,
+        error,
+    };
 };

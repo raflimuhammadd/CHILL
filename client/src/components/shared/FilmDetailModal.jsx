@@ -49,8 +49,12 @@ function FilmDetailModal() {
 
   // Action handlers
   const handlePlayClick = () => {
-    closeModal();
-    navigate(`/watch/${film.id}`);
+      closeModal();
+      if (film.isBlocked) {
+          navigate('/premium');
+          return;
+      }
+      navigate(`/watch/${film.id}`);
   };
 
   const handleFavoriteClick = () => {
@@ -134,8 +138,8 @@ function FilmDetailModal() {
                 className="flex-1"
                 onClick={handlePlayClick}
               >
-                <Icon name="play" className="h-4 w-4" />
-                Mulai
+                <Icon name={film.isBlocked ? 'lock' : 'play'} className="h-4 w-4" />
+                {film.isBlocked ? 'Berlangganan Premium' : 'Mulai'}
               </Button>
               <Button 
                 variant="secondary" 

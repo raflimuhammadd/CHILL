@@ -11,6 +11,13 @@ function HoverOverlay({film, variant = 'default'}) {
     const favorited = isFavorite(film.id);
     const {openEditModal} = useEditModalStore();
 
+    const handlePlay = (e) => {
+        e.stopPropagation();
+        navigate('/premium');
+        return;
+    }
+    navigate(`/watch/${film.id}`);
+
     const toggleFavorite = (e) => {
         e.stopPropagation(); //prevent card click evnt
         if (favorited) {
@@ -95,14 +102,17 @@ function HoverOverlay({film, variant = 'default'}) {
                         />
                     </button>
                     <button
-                        onClick={(e) => {e.stopPropagation(); navigate(`/watch/${film.id}`)} }
+                        onClick={handlePlay}                        
                         className="hover-overlay-button hover-overlay-button--play 
                         bg-white text-black rounded-full w-12 h-12 
                         flex items-center justify-center hover:bg-gray-200 
                         transition transform hover:scale-110 shadow-lg"
-                        aria-label='Play'
+                        aria-label={film.isBlocked ? 'Upgrade to Premium' : 'Play'}
                     >
-                        <Icon name="play" className="h-5 w-5 fill-black" />
+                        <Icon
+                            name={film.isBlocked ? 'lock' : 'play'}
+                            className="h-5 w-5 fill-black"
+                        />
                     </button>
                     <button
                         onClick={(e) => {e.stopPropagation(); openModal(film);}}

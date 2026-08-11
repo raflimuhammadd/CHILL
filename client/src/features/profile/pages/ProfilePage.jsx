@@ -9,12 +9,14 @@ import MyListGrid from '../../my-list/components/MyListGrid';
 import { useFavorites } from '../../../hooks/useFavorites';
 import {useDetailModal} from '../../../hooks/useDetailModal';
 import useAuthStore from '../../auth/store/authStore';
+import {useFilmData} from '../../../hooks/useFilmData';
 
 function ProfilePage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { getFavoriteItems } = useFavorites();
-  const favoriteItems = getFavoriteItems().filter(Boolean).slice(0, 6);
+  const {films} = useFilmData();
+  const favoriteItems = getFavoriteItems(films).slice(0, 6);
   useDetailModal();
   const avatarSrc = user?.avatar || '/assets/images/profile.png';
   // const isSubscribed = true;
