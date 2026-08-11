@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { contentService } from '../services/contentService';
 
-export const useFilmData = () => {
+export const useFilmData = ({type} = {}) => {
     const [films, setFilms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -14,19 +14,17 @@ export const useFilmData = () => {
                 setLoading(true);
                 setError(null);
 
-                const result = await contentService.getAllContents();
+                const params = {limit: 100};
+                if (type) params.type = type;
+                const result = await contentService.getAllContents(params);
 
                 if (!cancelled) {
                     setFilms(result?.data?.contents || []);
                 }
             } catch (err) {
-                if (!cancelled) {
-                    setError(err);
-                }
+                if (!cancelled) setError(err);
             } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
+                if (!cancelled) setLoading(false);
             }
         };
 
@@ -35,7 +33,7 @@ export const useFilmData = () => {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [type]);
 
     return {
         films,

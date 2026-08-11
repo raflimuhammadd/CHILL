@@ -5,7 +5,7 @@ import { usePremiumAccess } from '../hooks/usePremiumAccess';
 import { useDetailModal } from '../hooks/useDetailModal';
 
 function FilmPage() {
-    const { films, loading } = useFilmData();
+    const { films, loading } = useFilmData({type: 'movie'});
     const { decoratedFilms } = usePremiumAccess(films);
     useDetailModal();
 

@@ -48,18 +48,6 @@ const useFavoritesStore = create((set, get) => ({
             })
             .filter(Boolean);
     }
-
-    // getFavoriteItems: () => {
-    //     const {favorites, favoriteOverrides} = get();
-    //     return favorites
-    //         .map(id => {
-    //             const film = [id];
-    //             if (!film) return null;
-    //             const override = favoriteOverrides[id] || {};
-    //             return {...film, ...override};
-    //         })
-    //         .filter(Boolean);
-    // },
 }))
 
 export default useFavoritesStore

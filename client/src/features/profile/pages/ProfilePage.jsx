@@ -14,9 +14,9 @@ import {useFilmData} from '../../../hooks/useFilmData';
 function ProfilePage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const { getFavoriteItems } = useFavorites();
   const {films} = useFilmData();
-  const favoriteItems = getFavoriteItems(films).slice(0, 6);
+  const { getFavoriteItems } = useFavorites();
+  const favoriteItems = getFavoriteItems(films).slice(0, 9);
   useDetailModal();
   const avatarSrc = user?.avatar || '/assets/images/profile.png';
   // const isSubscribed = true;

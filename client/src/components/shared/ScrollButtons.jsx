@@ -1,7 +1,6 @@
-import {forwardRef} from 'react';
 import Icon from '../ui/Icon';
 
-const ScrollButtons = forwardRef(function ScrollButtons({scrollRef, direction, className =''}) {
+const ScrollButtons = (function ScrollButtons({scrollRef, direction, className =''}) {
     const scrollAmount = 320;
     const handleClick = () =>  scrollRef.current?.scrollBy({left: direction === 'left'
         ? -scrollAmount : scrollAmount, behavior: 'smooth'

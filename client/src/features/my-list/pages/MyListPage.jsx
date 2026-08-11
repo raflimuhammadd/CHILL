@@ -7,17 +7,19 @@ import ClearAllButton from '../components/ClearAllButton';
 import ConfirmClearModal from '../components/ConfirmClearModal';
 import { useFavorites } from '../../../hooks/useFavorites';
 import MyListGrid from '../components/MyListGrid';
+import { useFilmData } from '../../../hooks/useFilmData';
 import useEditModalStore from '../../../store/editModalStore';
 
 function MyListPage () {
   const {getFavoriteItems, updateFavoriteItem, clearFavorites} = useFavorites();
+  const {films} = useFilmData();
   const [activeTab, setActiveTab] = useState('all');
   const { isOpen: isEditOpen, editingItem, closeEditModal } = useEditModalStore();
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
   // get all favorite items
-  const allItems = getFavoriteItems();
+  const allItems = getFavoriteItems(films);
 
   // filter logic
   const filteredItems = {

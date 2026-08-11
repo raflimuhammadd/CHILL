@@ -22,6 +22,9 @@ class ContentService {
             creator: row.creator,
             rating: row.rating,
             isPremium: Boolean(row.is_premium_only),
+            topRank: row.top_rank,
+            isNewRelease: row.is_new_release,
+            hasNewEpisode: row.has_new_episode,
             genres: row.genres ? row.genres.split(', ').filter(Boolean) : [],
             createdAt: row.created_at,
         };

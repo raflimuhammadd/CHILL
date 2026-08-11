@@ -8,7 +8,7 @@ class UserService {
     async getProfile(userId) {
         const [rows] = await db.query(
             `SELECT id, email, username, full_name, avatar_url, is_premium, created_at
-             FROM users WHERE id = ? AND deleted_at IS NULL`,
+            FROM users WHERE id = ? AND deleted_at IS NULL`,
             [userId]
         );
         const user = rows[0];

@@ -18,7 +18,11 @@ const normalizeContent = (content) => {
         age: content.ageRating || '13+',
         rating: content.rating ? `${content.rating}/5` : '0/5',
         genres: content.genres || [],
-        cast: content.cast || [],
+        cast: Array.isArray(content.cast)
+            ? content.cast
+            : content.cast
+                ? content.cast.split(', ').filter(Boolean)
+                : [],
         creator: content.creator,
 
         // media
