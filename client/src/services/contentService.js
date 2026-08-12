@@ -133,10 +133,10 @@ export const contentService = {
         }
     },
 
-    async searchContents(query) {
+    async searchContents(params = {}) {
         try {
             const response = await apiClient.get('/contents/search', {
-                params: { q: query },
+                params 
             });
             return normalizeResponse(response);
         } catch (error) {
@@ -144,4 +144,14 @@ export const contentService = {
             throw error;
         }
     },
+
+    async getGenres() {
+        try {
+            const response = await apiClient.get('/genres');
+            return normalizeResponse(response);
+        } catch(error) {
+            console.error('Error fetching genres:', error);
+            throw error;
+        }
+    }
 };
