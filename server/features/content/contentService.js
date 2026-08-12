@@ -202,29 +202,95 @@ class ContentService {
         return rows.map((r) => this._mapContent(r));
     }
 
-    async searchContents(query) {
-        if (!query || typeof query !== 'string' || query.trim() === '') {
-            throw new ValidationError('Search query is required');
+    async searchContents(filters = {}) {
+        const { q, type, genre, year, premium, sort, limit = 20, page = 1 } = filters;
+
+        const hasQuery = q && typeof q === 'string' && q.trim() !== '';
+        const hasFilter = type === 'movie' || type === 'series' || genre || year || premium === 'true' || premium === '1' || premium === 'false' || premium === '0';
+
+        if (!hasQuery && !hasFilter) {
+            throw new ValidationError('Search query or at least one filter is required');
         }
 
-        const searchTerm = `%${query.trim()}%`;
+        const conditions = [];
+        const params = [];
+
+        conditions.push('c.deleted_at IS NULL');
+
+        if (hasQuery) {
+            const searchTerm = `%${q.trim()}%`;
+            conditions.push('(c.title LIKE ? OR c.description LIKE ? OR c.creator LIKE ? OR c.cast LIKE ?)');
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        }
+
+        if (type === 'movie' || type === 'series') {
+            conditions.push('c.content_type = ?');
+            params.push(type);
+        }
+
+        if (year && !isNaN(Number(year)) && Number(year) > 0) {
+            conditions.push('c.release_year = ?');
+            params.push(Number(year));
+        }
+
+        if (premium === 'true' || premium === '1') {
+            conditions.push('c.is_premium_only = 1');
+        } else if (premium === 'false' || premium === '0') {
+            conditions.push('c.is_premium_only = 0');
+        }
+
+        if (genre) {
+            conditions.push(`c.id IN (
+                SELECT cg.content_id FROM content_genres cg
+                JOIN genres g ON cg.genre_id = g.id
+                WHERE g.slug = ?
+            )`);
+            params.push(genre);
+        }
+
+        const orderByMap = {
+            rating: 'c.rating DESC',
+            year: 'c.release_year DESC',
+            title: 'c.title ASC',
+            newest: 'c.created_at DESC',
+        };
+
+        const orderBy = orderByMap[sort] || 'c.rating DESC';
+        const safeLimit = Math.min(Number(limit) || 20, 100);
+        const safePage = Math.max(Number(page) || 1, 1);
+        const safeOffset = (safePage - 1) * safeLimit;
+
+        const whereClause = conditions.length
+            ? `WHERE ${conditions.join(' AND ')}`
+            : '';
+
+        const [[{ total }]] = await db.query(
+            `SELECT COUNT(*) AS total
+            FROM contents c
+            ${whereClause}`,
+            params
+        );
 
         const [rows] = await db.query(
-             `SELECT c.*,
-                GROUP_CONCAT(DISTINCT g.name ORDER BY g.name SEPARATOR ', ') AS genres
+            `SELECT c.*,
+                    GROUP_CONCAT(DISTINCT g.name ORDER BY g.name SEPARATOR ', ') AS genres
             FROM contents c
             LEFT JOIN content_genres cg ON c.id = cg.content_id
             LEFT JOIN genres g ON cg.genre_id = g.id
-            WHERE c.deleted_at IS NULL
-            AND (c.title LIKE ? OR c.description LIKE ? OR c.creator LIKE ? OR c.cast LIKE ?)
+            ${whereClause}
             GROUP BY c.id
-            ORDER BY c.rating DESC
-            LIMIT 50`,
-            [searchTerm, searchTerm, searchTerm, searchTerm]
+            ORDER BY ${orderBy}
+            LIMIT ? OFFSET ?`,
+            [...params, safeLimit, safeOffset]
         );
 
-        return rows.map((r) => this._mapContent(r));
+        return {
+            contents: rows.map((r) => this._mapContent(r)),
+            total,
+            page: safePage,
+            limit: safeLimit,
+        };
     }
-}
+};
 
 module.exports = new ContentService();

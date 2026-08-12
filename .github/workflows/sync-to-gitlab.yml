@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Ambil seluruh commit history
+          fetch-depth: 0 # take all commit history
 
       - name: Push to GitLab
         run: |

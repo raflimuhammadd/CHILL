@@ -48,8 +48,9 @@ exports.getRecommendations = async (req, res, next) => {
 
 exports.searchContents = async (req, res, next) => {
     try {
-        const results = await contentService.searchContents(req.query.q);
+        const results = await contentService.searchContents(req.query);
         return success(res, results, 'Search Completed');
+        console.log('req.query', req.query);
     } catch (error) {
         next(error);
     }
