@@ -13,6 +13,10 @@ dist/
 build/
 .vite/
 
+# Graphify generated architecture files
+*-ARCHITECTURE.md
+graphify-out/
+
 # Logs
 logs/
 *.log

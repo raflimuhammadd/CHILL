@@ -1,7 +1,7 @@
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {ValidationError, ConflictError} = require('../../utils/error');
+const {ValidationError, ConflictError, AuthError} = require('../../utils/error');
 const {validateUsername, validatePassword} = require('../../utils/validators');
 
 class AuthService {
@@ -37,13 +37,13 @@ class AuthService {
         const user = rows[0];
 
         if (!user) {
-            throw new ValidationError('Invalid username or password');
+            throw new AuthError('Invalid username or password');
         }
 
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if (!isMatch) {
-            throw new ValidationError('Invalid username or password');
+            throw new AuthError('Invalid username or password');
         }
 
         return {
