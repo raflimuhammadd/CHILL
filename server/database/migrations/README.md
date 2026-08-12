@@ -1,0 +1,34 @@
+-- ============================================================================
+-- CHILL STREAMS DATABASE SETUP GUIDE
+-- Deployment instructions for server setup
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- PREREQUISITES
+-- ----------------------------------------------------------------------------
+-- MySQL 8.4+
+-- Database user with CREATE, INSERT, ALTER, INDEX privileges
+-- ----------------------------------------------------------------------------
+-- 1. Create database:
+--    CREATE DATABASE chill_streams CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--
+-- 2. Run migrations in order:
+--    mysql -u root -p chill_streams < server/database/migrations/01_create_tables.sql
+--    mysql -u root -p chill_streams < server/database/migrations/02_seed_master_data.sql
+--    mysql -u root -p chill_streams < server/database/migrations/03_seed_content_data.sql
+--
+-- 3. To rollback (undo everything):
+--    mysql -u root -p chill_streams < server/database/migrations/04_rollback.sql
+--
+-- 4. Environment variables for backend (.env file):
+--    DB_HOST=localhost
+--    DB_USER=your_db_user
+--    DB_PASSWORD=your_db_password
+--    DB_NAME=chill_streams
+--    DB_PORT=3306
+-- ----------------------------------------------------------------------------
+
+-- Single command execution alternative:
+-- mysql -u root -p chill_streams -e "source server/database/migrations/01_create_tables.sql"
+-- mysql -u root -p chill_streams -e "source server/database/migrations/02_seed_master_data.sql"
+-- mysql -u root -p chill_streams -e "source server/database/migrations/03_seed_content_data.sql"

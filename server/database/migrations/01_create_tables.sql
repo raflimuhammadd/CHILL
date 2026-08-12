@@ -1,13 +1,13 @@
 -- ============================================================================
--- CHILL STREAMS DATABASE SCHEMA
--- Description: Complete DDL for Chill Streams streaming platform
--- Author: Backend Team
--- Date: 2026-08-04
+-- CHILL STREAMS DATABASE MIGRATION
+-- Description: Create all tables with proper FK relationships and indexes
+-- Order: DROP children first, then CREATE parents first
 -- ============================================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================================
 -- STEP 1: DROP EXISTING TABLES (Clean Slate)
--- Order: Drop children before parents (reverse of CREATE order)
 -- ============================================================================
 
 DROP TABLE IF EXISTS content_recommendations;
@@ -22,16 +22,16 @@ DROP TABLE IF EXISTS genres;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS subscription_plans;
 
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ============================================================================
 -- STEP 2: CREATE TABLES
--- Order: Create parents before children (respect foreign keys)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- TABLE: subscription_plans
--- Purpose: Store subscription tiers (Individual, Duo, Family)
--- Dependencies: None (root table)
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE subscription_plans (
   id SMALLINT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(100) NOT NULL COMMENT 'Display name: Individual, Berdua, Keluarga',
@@ -47,9 +47,8 @@ COMMENT='Subscription plan tiers';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: users
--- Purpose: User accounts and authentication
--- Dependencies: None (root table)
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE users (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   email VARCHAR(255) UNIQUE COMMENT 'User email (optional)',
@@ -66,9 +65,8 @@ COMMENT='User accounts';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: genres
--- Purpose: Film/series genre categories
--- Dependencies: None (root table)
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE genres (
   id SMALLINT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(100) UNIQUE NOT NULL COMMENT 'Genre name: Action, Drama, etc',
@@ -79,10 +77,8 @@ COMMENT='Genre master data';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: contents
--- Purpose: Movies and TV series catalog
--- Dependencies: None (root table)
--- Note: content_type differentiates between 'movie' and 'series'
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE contents (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   content_type VARCHAR(20) NOT NULL COMMENT 'movie or series',
@@ -112,10 +108,8 @@ COMMENT='Movies and TV series';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: episodes
--- Purpose: Episodes for TV series
--- Dependencies: contents (FK: content_id)
--- Note: Only applicable when content_type = 'series'
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE episodes (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   content_id BIGINT NOT NULL COMMENT 'FK to contents table',
@@ -134,11 +128,9 @@ CREATE TABLE episodes (
 COMMENT='TV series episodes';
 
 -- ----------------------------------------------------------------------------
--- TABLE: content_genres (Junction Table)
--- Purpose: Many-to-many relationship between contents and genres
--- Dependencies: contents, genres
--- Pattern: Composite Primary Key (no auto-increment ID)
+-- TABLE: content_genres (Junction)
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE content_genres (
   content_id BIGINT NOT NULL COMMENT 'FK to contents',
   genre_id SMALLINT NOT NULL COMMENT 'FK to genres',
@@ -150,10 +142,8 @@ COMMENT='Content-Genre many-to-many junction';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: favorites
--- Purpose: User's favorite/watchlist
--- Dependencies: users, contents
--- Pattern: Composite PK (user_id, content_id)
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE favorites (
   user_id BIGINT NOT NULL COMMENT 'FK to users',
   content_id BIGINT NOT NULL COMMENT 'FK to contents',
@@ -166,16 +156,17 @@ CREATE TABLE favorites (
 COMMENT='User favorites/watchlist';
 
 -- ----------------------------------------------------------------------------
--- TABLE: watch_history
--- Purpose: Track user viewing progress
--- Dependencies: users, contents, episodes
--- Note: episode_id is NULL for movies, NOT NULL for series
+-- TABLE: watch_history (with rating/note/status columns included)
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE watch_history (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   user_id BIGINT NOT NULL COMMENT 'FK to users',
   content_id BIGINT NOT NULL COMMENT 'FK to contents',
   episode_id BIGINT COMMENT 'FK to episodes (NULL for movies)',
+  rating TINYINT UNSIGNED COMMENT 'User rating 1-10',
+  note TEXT COMMENT 'User notes',
+  status ENUM('watching', 'completed', 'on_hold') DEFAULT 'watching',
   progress_seconds INT NOT NULL DEFAULT 0 COMMENT 'Current playback position',
   duration_seconds INT NOT NULL COMMENT 'Total video duration',
   completed TINYINT(1) DEFAULT 0 COMMENT '1 = finished watching',
@@ -191,9 +182,8 @@ COMMENT='User viewing history and progress';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: orders
--- Purpose: Subscription purchase orders
--- Dependencies: users, subscription_plans
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE orders (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   user_id BIGINT NOT NULL COMMENT 'FK to users',
@@ -211,9 +201,8 @@ COMMENT='Subscription orders';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: payments
--- Purpose: Payment transactions via payment gateway
--- Dependencies: orders
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE payments (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   order_id BIGINT NOT NULL COMMENT 'FK to orders',
@@ -237,10 +226,8 @@ COMMENT='Payment transactions';
 
 -- ----------------------------------------------------------------------------
 -- TABLE: content_recommendations
--- Purpose: Related/recommended content (self-referencing many-to-many)
--- Dependencies: contents
--- Example: "Avengers" recommends "Black Panther", "Thor"
 -- ----------------------------------------------------------------------------
+
 CREATE TABLE content_recommendations (
   content_id BIGINT NOT NULL COMMENT 'Source content',
   recommended_content_id BIGINT NOT NULL COMMENT 'Recommended content',
@@ -252,18 +239,8 @@ CREATE TABLE content_recommendations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Content recommendations';
 
-ALTER TABLE watch_history 
-ADD COLUMN rating TINYINT UNSIGNED COMMENT 'User rating 1-10' AFTER episode_id,
-ADD COLUMN note TEXT COMMENT 'User notes' AFTER rating,
-ADD COLUMN status ENUM('watching', 'completed', 'on_hold') DEFAULT 'watching' AFTER note;
-
--- Add index for status filtering
-CREATE INDEX idx_watch_history_status ON watch_history(status);
-
 -- ============================================================================
 -- STEP 3: CREATE INDEXES
--- Purpose: Optimize query performance
--- Rule of thumb: Index columns used in WHERE, JOIN, ORDER BY
 -- ============================================================================
 
 -- Users indexes
@@ -289,6 +266,7 @@ CREATE INDEX idx_favorites_content ON favorites(content_id);
 CREATE INDEX idx_watch_history_user ON watch_history(user_id);
 CREATE INDEX idx_watch_history_content ON watch_history(content_id);
 CREATE INDEX idx_watch_history_completed ON watch_history(completed);
+CREATE INDEX idx_watch_history_status ON watch_history(status);
 
 -- Orders indexes
 CREATE INDEX idx_orders_user ON orders(user_id);
@@ -299,42 +277,3 @@ CREATE INDEX idx_orders_code ON orders(order_code);
 CREATE INDEX idx_payments_order ON payments(order_id);
 CREATE INDEX idx_payments_status ON payments(status);
 CREATE INDEX idx_payments_external ON payments(external_payment_id);
-
--- ============================================================================
--- STEP 4: SEED INITIAL DATA
--- Purpose: Insert essential data needed for app to function
--- ============================================================================
-
--- Insert genres (15 common genres)
-INSERT INTO genres (name, slug) VALUES 
-  ('Action', 'action'),
-  ('Drama', 'drama'),
-  ('Comedy', 'comedy'),
-  ('Thriller', 'thriller'),
-  ('Horror', 'horror'),
-  ('Sci-Fi', 'sci-fi'),
-  ('Romance', 'romance'),
-  ('Animation', 'animation'),
-  ('Adventure', 'adventure'),
-  ('Crime', 'crime'),
-  ('Fantasy', 'fantasy'),
-  ('Mystery', 'mystery'),
-  ('Sports', 'sports'),
-  ('Family', 'family'),
-  ('Superhero', 'superhero');
-
--- Insert subscription plans (3 tiers matching frontend)
-INSERT INTO subscription_plans (name, slug, description, price, duration_days, quality, is_active) VALUES
-  ('Individual', 'individual', 'Perfect untuk 1 orang', 49990.00, 30, '720p', 1),
-  ('Berdua', 'duo', 'Berbagi dengan 1 orang lain', 79990.00, 30, '1080p', 1),
-  ('Keluarga', 'family', 'Untuk satu keluarga', 159990.00, 30, '4K', 1);
-
--- Insert test user (password: 'password123' - bcrypt hashed)
--- Hash generated with: bcrypt.hash('password123', 10)
-INSERT INTO users (email, username, password_hash, full_name, is_premium) VALUES
-  ('test@chill.com', 'testuser', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Test User', 0);
-
--- ============================================================================
--- END OF SCHEMA
--- ============================================================================
-
