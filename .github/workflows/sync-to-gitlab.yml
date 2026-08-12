@@ -1,0 +1,19 @@
+name: Sync to GitLab
+
+on:
+  push:
+    branches:
+      - '**' # syncing all branch
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ambil seluruh commit history
+
+      - name: Push to GitLab
+        run: |
+          git push --prune https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/raflimuhammadd/CHILL.git +refs/heads/*:refs/heads/* +refs/tags/*:refs/tags/*
