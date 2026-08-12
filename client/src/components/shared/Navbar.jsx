@@ -9,7 +9,7 @@ function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const linkClass = ({ isActive }) =>
-  `hover:text-gray-300 navbar-menu-link ${isActive ? 'text-red-500 font-bold' : 'text-white font-medium'}
+  `hover:text-gray-300 navbar-menu-link ${isActive ? 'text-amber-500 font-bold' : 'text-white font-medium'}
   transition text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl`;
 
   useEffect(() => {
@@ -78,14 +78,14 @@ function Navbar() {
                 className="relative hover:text-red-500 transition-colors"
                 aria-label="Search"
               >
-                <Icon name="search" className="w-5 h-5 md:w-6 md:h-6 stroke-gray-500" />
+                <Icon name="search" className="w-5 h-5 md:w-6 md:h-6 stroke-amber-500" />
               </button>
               <button
                 onClick={() => navigate('/notifications')}
                 className="relative hover:text-white transition-colors"
                 aria-label="Notifications"
               >
-                <Icon name="bell" className="w-5 h-5 md:w-6 md:h-6 stroke-gray-500" />
+                <Icon name="bell" className="w-5 h-5 md:w-6 md:h-6 stroke-amber-500" />
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full
                 text-[10px] flex items-center justify-center">
                   3

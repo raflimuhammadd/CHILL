@@ -63,7 +63,7 @@ function CommunityPage() {
                                                text-center hover:bg-white/10 transition-colors"
                                 >
                                     <img
-                                        src={user.avatar || '/assets/images/profile.png'}
+                                        src={user.avatar_url || '/assets/images/profile.png'}
                                         alt={user.username}
                                         className="w-20 h-20 rounded-full object-cover mb-3"
                                     />

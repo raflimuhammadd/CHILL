@@ -47,14 +47,14 @@ function ProfileDropdown() {
                 flex items-center justify-center gap-2 cursor-pointer"
                 aria-label="Profile menu"
             >
-                <img src={user?.avatar || '/assets/images/profile.png'} 
+                <img src={user?.avatar_url || '/assets/images/profile.png'} 
                     alt="Profile"
                     className="profile-dropdown-avatar h-8 w-8 xs:h-9 xs:w-9 
                     sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full object-cover" 
                 />
                 <Icon 
                     name="chevronDown" 
-                    className={`text-white h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} 
+                    className={`text-white stroke-amber-500 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} 
                 />
             </button>
 

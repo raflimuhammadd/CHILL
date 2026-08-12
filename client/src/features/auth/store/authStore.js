@@ -93,7 +93,6 @@ const useAuthStore = create((set) => ({
         set({ isLoading: true, error: null });
         try {
             const currentUser = useAuthStore.getState().user;
-            const updatedUser = { ...currentUser, ...updates };
 
             const payload = { ...currentUser, ...updates };
             if (payload.avatar) {
@@ -102,8 +101,8 @@ const useAuthStore = create((set) => ({
             }
             await updateUser(payload);
 
-            localStorage.setItem('chill-user', JSON.stringify(updatedUser));
-            set({ user: updatedUser, isLoading: false });
+            localStorage.setItem('chill-user', JSON.stringify(payload));
+            set({ user: payload, isLoading: false });
             return true;
         } catch (err) {
             set({ error: extractErrorMessage(err), isLoading: false });

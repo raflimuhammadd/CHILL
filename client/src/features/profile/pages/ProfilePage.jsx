@@ -18,7 +18,7 @@ function ProfilePage() {
   const { getFavoriteItems } = useFavorites();
   const favoriteItems = getFavoriteItems(films).slice(0, 9);
   useDetailModal();
-  const avatarSrc = user?.avatar || '/assets/images/profile.png';
+  const avatarSrc = user?.avatar_url || '/assets/images/profile.png';
   // const isSubscribed = true;
   const isSubscribed = Boolean(user?.isPremium);
   const [avatarBase64, setAvatarBase64] = useState(null);
