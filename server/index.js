@@ -98,6 +98,7 @@ if (require.main === module) {
         console.log(`Health: http://localhost:${PORT}/api/health`);
         console.log(`API Info: http://localhost:${PORT}/api`);
         console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`Database: ${process.env.DB_HOST}:${process.env.DB_PORT}`);
     });
 }
 

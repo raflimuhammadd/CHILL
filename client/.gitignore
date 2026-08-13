@@ -6,7 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.env
 .yaml
 
 node_modules
@@ -24,3 +23,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables
+.env
+.env.production
+.env.staging
+.env.development
+
+# Aiven certs
+certs/

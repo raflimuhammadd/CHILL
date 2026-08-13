@@ -23,8 +23,12 @@ const poolConfig = {
 };
 
 if (process.env.DB_SSL === 'true') {
+    const fs = require('fs');
+    const path = require('path');
+
     poolConfig.ssl = {
-        rejectUnauthorized: false
+        ca: fs.readFileSync(path.join(__dirname, '..', 'certs', 'aiven-ca.pem')),
+        rejectUnauthorized: true
     };
 }
 
@@ -35,6 +39,7 @@ pool.getConnection()
         console.log('Database connection established');
         console.log(`Database: ${process.env.DB_NAME}`);
         console.log(`Host: ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+        console.log(`SSL: ${process.env.DB_SSL === 'true' ? 'enabled' : 'disabled'}`);
         connection.release();
     })
     .catch(err => {
