@@ -27,7 +27,7 @@ if (process.env.DB_SSL === 'true') {
     const path = require('path');
 
     poolConfig.ssl = {
-        ca: fs.readFileSync(path.join(__dirname, '..', 'certs', 'aiven-ca.pem')),
+        ca: fs.readFileSync(path.join(__dirname, '..', 'certs', 'ca.pem')),
         rejectUnauthorized: true
     };
 }
