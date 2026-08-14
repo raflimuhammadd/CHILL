@@ -51,6 +51,7 @@ app.get('/api', (req, res) => {
             deleteGenre: 'DELETE /api/genres/:id',
             register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
+            verifyEmail: 'POST /api/auth/verify-email',
             getUserById: 'GET /api/users/me',
             updateUser: 'PATCH /api/users/me'
         },

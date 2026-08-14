@@ -37,10 +37,11 @@ function ProfilePage() {
   const handleSave = async (updates) => {
     const payload = {...updates};
     if (avatarBase64) payload.avatar = avatarBase64;
-    const success = await useAuthStore.getState().updateProfile(payload);
-    if (success) {
+    const result = await useAuthStore.getState().updateProfile(payload);
+    if (result.success) {
       setAvatarBase64(null);
     }
+    return result;
   }
 
   return (

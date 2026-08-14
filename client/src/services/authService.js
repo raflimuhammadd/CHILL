@@ -19,3 +19,8 @@ export const updateUser = async (userData) => {
     const response = await apiClient.patch('/users/me', userData);
     return response.data;
 }
+
+export const resendVerificationEmail = async () => {
+    const response = await apiClient.post('/auth/resend-verification');
+    return response.data;
+}

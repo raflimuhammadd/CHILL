@@ -1,13 +1,16 @@
 const bcrypt = require('bcryptjs');
 const db = require('../../config/database');
+const { v4: uuidv4 } = require('uuid');
 const { NotFoundError, ConflictError, ValidationError } = require('../../utils/error');
 const { MESSAGES } = require('../../utils/constant');
 const { validateEmail } = require('../../utils/validators');
+const emailService = require('../email/emailService');
 
 class UserService {
     async getProfile(userId) {
         const [rows] = await db.query(
-            `SELECT id, email, username, full_name, avatar_url, is_premium, created_at
+            `SELECT id, email, username, full_name, avatar_url, is_premium,
+            email_verified, created_at
             FROM users WHERE id = ? AND deleted_at IS NULL`,
             [userId]
         );
@@ -48,13 +51,23 @@ class UserService {
             updateFields.password_hash = await bcrypt.hash(data.password, 10);
         }
         
+        let newEmail = null;
+        let verificationToken = null;
+
         if (data.email !== undefined) {
             const validEmail = validateEmail(data.email);
             if (validEmail) {
-                updateFields.email = validEmail;
                 const existingEmail = await this._findByEmail(validEmail);
                 if (existingEmail && existingEmail.id !== userId) {
                     throw new ConflictError(MESSAGES.EMAIL_IN_USE);
+                }
+                if (existing.email !== validEmail) {
+                    verificationToken = uuidv4();
+                    newEmail = validEmail;
+                    updateFields.email = validEmail;
+                    updateFields.email_verified = 0;
+                    updateFields.email_verification_token = verificationToken;
+                    updateFields.email_verification_token_expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
                 }
             }
         }
@@ -68,6 +81,15 @@ class UserService {
         const values = [...fields.map(f => updateFields[f]), userId];
 
         await db.query(`UPDATE users SET ${setClause} WHERE id = ?`, values);
+
+        // sent new email verification
+        if (newEmail && verificationToken) {
+            try {
+                await emailService.sendVerificationEmail(newEmail, verificationToken);
+            } catch (emailError) {
+                console.error('[UserService] Failed to sexnd verification email:', emailError.message);
+            }
+        }
 
         return this.getProfile(userId);
     }

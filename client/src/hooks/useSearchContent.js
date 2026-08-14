@@ -33,16 +33,9 @@ export const useSearchContent = () => {
         !!filters.sort;
 
     useEffect(() => {
+        if (!hasQuery && !hasFilter) return;
+        
         let cancelled = false;
-
-        if (!hasQuery && !hasFilter) {
-            if (!cancelled) {
-                setContents([]);
-                setTotal(0);
-                setError(null);
-            }
-            return;
-        }
 
         const params = {
             q: hasQuery ? debouncedQuery : undefined,

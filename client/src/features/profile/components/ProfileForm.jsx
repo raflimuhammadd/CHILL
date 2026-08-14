@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '../../../components/ui/Icon';
 import { Input } from '../../../components/ui';
+import useAuthStore from '../../auth/store/authStore';
 
-function ProfileField({ label, value, name, editing, onChange, onEdit }) {
+function ProfileField({ label, value, name, editing, onChange, onEdit, badge }) {
   if (editing) {
     return (
       <div className="rounded-lg border border-[#E7E3FC3B] bg-[#22282A] px-4 py-3 md:px-5 md:py-4">
@@ -28,9 +29,12 @@ function ProfileField({ label, value, name, editing, onChange, onEdit }) {
           <p className="text-base md:text-lg leading-snug text-white/55">
             {label}
           </p>
-          <p className="text-lg md:text-xl leading-snug text-white">
-            {value || '-'}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-lg md:text-xl leading-snug text-white">
+              {value || '-'}
+            </p>
+            {badge}
+          </div>
         </div>
         <button onClick={() => onEdit(name)} className="shrink-0">
           <Icon name="update" className="h-6 w-6 text-white" />
@@ -40,6 +44,7 @@ function ProfileField({ label, value, name, editing, onChange, onEdit }) {
   );
 }
 
+
 function ProfileForm({ user, onSave }) {
   const [editingField, setEditingField] = useState(null);
   const [formData, setFormData] = useState({
@@ -47,6 +52,53 @@ function ProfileForm({ user, onSave }) {
     email: user?.email || '',
     password: '',
   });
+  const [resending, setResending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+  const [cooldown, setCooldown] = useState(0);
+  const { resendVerification } = useAuthStore();
+
+  const isEmailVerified = user?.email_verified === 1;
+  const hasEmail = Boolean(formData.email);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    setResending(true);
+    const result = await resendVerification();
+    setStatusMessage({
+      type: result.success ? 'success' : 'error',
+      text: result.message,
+    });
+    setResending(false);
+    if (result.success) setCooldown(30);
+  };
+
+  const emailBadge = !hasEmail ? (
+    <span className="text-xs md:text-sm text-white/40">Email belum diatur</span>
+  ) : isEmailVerified ? (
+    <span className="inline-flex items-center gap-1 text-xs md:text-sm text-green-400">
+      <Icon name="check" className="h-4 w-4" /> Terverifikasi
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-2 text-xs md:text-sm">
+      <span className="text-amber-400">
+        Belum terverifikasi
+      </span>
+      <button
+        type="button"
+        onClick={handleResend}
+        disabled={resending || cooldown > 0}
+        className="text-blue-300 hover:text-blue-500 underline disabled:opacity-50"
+      >
+        {resending ? 'Mengirim ulang...' : cooldown > 0 ? `Kirim ulang (${cooldown}s)` : 'Kirim ulang'}
+    </button>
+    </span>
+  );
 
   const handleEdit = (fieldName) => {
     setEditingField(editingField === fieldName ? null : fieldName);
@@ -56,12 +108,26 @@ function ProfileForm({ user, onSave }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const updates = {};
     if (formData.full_name !== user?.full_name) updates.full_name = formData.full_name;
     if (formData.email !== user?.email) updates.email = formData.email;
     if (formData.password) updates.password = formData.password;
-    onSave(updates);
+
+    setStatusMessage({ type: '', text: '' });
+    const result = await onSave(updates);
+
+    if (!result.success) {
+      setStatusMessage({
+        type: 'error',
+        text: result?.message || 'Terjadi kesalahan saat menyimpan profil',
+      });
+    } else if (updates.email) {
+      setStatusMessage({
+        type: 'success',
+        text: `Verifikasi email dikirim ke ${formData.email}. Cek inbox anda`,
+      });
+    }
     setEditingField(null);
   };
 
@@ -88,6 +154,7 @@ function ProfileForm({ user, onSave }) {
           label="Email"
           value={formData.email}
           name="email"
+          badge={emailBadge}
           editing={editingField === 'email'}
           onChange={handleChange}
           onEdit={handleEdit}
@@ -101,6 +168,16 @@ function ProfileForm({ user, onSave }) {
           onEdit={handleEdit}
         />
       </div>
+
+      {statusMessage.text && (
+        <div className={`mt-6 rounded-lg border px-4 py-3 text-sm ${
+          statusMessage.type === 'success'
+            ? 'border-green-500 text-green-400'
+            : 'border-red-500 text-red-400'
+        }`}>
+          {statusMessage.text}
+        </div>
+      )}
 
       <button
         onClick={handleSubmit}

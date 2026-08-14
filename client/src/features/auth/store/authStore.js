@@ -4,6 +4,7 @@ import {
     loginUser,
     updateUser,
     getCurrentUser,
+    resendVerificationEmail,
 } from '../../../services/authService';
 
 const extractErrorMessage = (err) =>
@@ -17,10 +18,7 @@ const useAuthStore = create((set) => ({
     register: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-            await registerUser({
-                username: credentials.username,
-                password: credentials.password,
-            });
+            await registerUser(credentials);
             set({ user: null, isLoading: false });
             return true;
         } catch (err) {
@@ -99,14 +97,37 @@ const useAuthStore = create((set) => ({
                 payload.avatar_url = payload.avatar;
                 delete payload.avatar;
             }
-            await updateUser(payload);
 
-            localStorage.setItem('chill-user', JSON.stringify(payload));
-            set({ user: payload, isLoading: false });
-            return true;
+            const result = await updateUser(payload);
+            const fresh = result.data;
+
+            const normalizedUser = {
+                ...fresh,
+                isPremium: Boolean(fresh.is_premium),
+                subscriptionPlan: null,
+            };
+
+            localStorage.setItem('chill-user', JSON.stringify(normalizedUser));
+            set({ user: normalizedUser, isLoading: false });
+            return {success: true, message: 'Profile updated'};
         } catch (err) {
             set({ error: extractErrorMessage(err), isLoading: false });
-            return false;
+            const message = extractErrorMessage(err);
+            set({error: message, isLoading: false});
+            return {success: false, message};
+        }
+    },
+
+    resendVerification: async () => {
+        set({isLoading: true, error: null});
+        try {
+            const result = await resendVerificationEmail();
+            set({isLoading: false});
+            return {success: true, message: result.message};
+        } catch(err) {
+            const message = extractErrorMessage(err);
+            set({error: message, isLoading: false});
+            return {success: false, message};
         }
     },
 

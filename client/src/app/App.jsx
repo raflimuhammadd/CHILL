@@ -17,6 +17,7 @@ import PaymentPage from '../features/subscription/pages/PaymentPage';
 import PremiumPage from '../features/subscription/pages/PremiumPage';
 import WatchHistoryPage from '../pages/WatchHistoryPage';
 import SearchPage from '../pages/SearchPage';
+import VerifyEmailPage from '../features/auth/pages/VerifyEmailPage';
 import NotificationsPage from '../pages/NotificationsPage';
 import ScrollToTop from '../components/ScrollToTop';
 import ProtectedRoute from '../components/shared/ProtectedRoute';
@@ -45,6 +46,7 @@ function App() {
             <Toaster position="bottom-right" gutter={8} containerClassName="mb-4" />
             <ScrollToTop />
             <Routes>
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 
