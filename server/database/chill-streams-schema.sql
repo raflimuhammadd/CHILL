@@ -58,6 +58,11 @@ CREATE TABLE users (
   full_name VARCHAR(255) COMMENT 'User display name',
   avatar_url TEXT COMMENT 'Profile picture URL',
   is_premium TINYINT(1) DEFAULT 0 COMMENT '1 = premium user, 0 = free user',
+  email_verification_token VARCHAR(255) COMMENT 'Token for email verification (UUID)',
+  email_verified TINYINT(1) DEFAULT 0 COMMENT '1 = email verified, 0 = not verified',
+  email_verified_at DATETIME COMMENT 'Timestamp when email was verified',
+  email_verification_token_expires_at DATETIME COMMENT 'Token expiration timestamp',
+  email_verification_sent_at DATETIME COMMENT 'Timestamp when verification email was sent',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME COMMENT 'Soft delete timestamp'
@@ -270,6 +275,7 @@ CREATE INDEX idx_watch_history_status ON watch_history(status);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_premium ON users(is_premium);
+CREATE INDEX idx_users_verification_token ON users(email_verification_token);
 
 -- Contents indexes
 CREATE INDEX idx_contents_type ON contents(content_type);
@@ -331,8 +337,8 @@ INSERT INTO subscription_plans (name, slug, description, price, duration_days, q
 
 -- Insert test user (password: 'password123' - bcrypt hashed)
 -- Hash generated with: bcrypt.hash('password123', 10)
-INSERT INTO users (email, username, password_hash, full_name, is_premium) VALUES
-  ('test@chill.com', 'testuser', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Test User', 0);
+INSERT INTO users (email, username, password_hash, full_name, is_premium, email_verification_sent_at) VALUES
+  ('test@chill.com', 'testuser', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Test User', 0, NOW());
 
 -- ============================================================================
 -- END OF SCHEMA
