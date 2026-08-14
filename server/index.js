@@ -1,6 +1,8 @@
 const db = require('./config/database');
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+const { uploadAvatar } = require('./features/upload/uploadController');
 require ('dotenv').config();
 
 const app = express();
@@ -20,6 +22,8 @@ if (process.env.NODE_ENV === 'development') {
         next();
     });
 }
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => {
     res.json({
@@ -53,7 +57,8 @@ app.get('/api', (req, res) => {
             login: 'POST /api/auth/login',
             verifyEmail: 'POST /api/auth/verify-email',
             getUserById: 'GET /api/users/me',
-            updateUser: 'PATCH /api/users/me'
+            updateUser: 'PATCH /api/users/me',
+            uploadAvatar: 'POST /api/upload',
         },
         documentation: 'https://github.com/raflimuhammadd/CHILL'
     });
@@ -65,6 +70,7 @@ app.use('/api/auth', require('./features/auth/authRoutes'));
 app.use('/api/contents', require('./features/content/contentRoutes'));
 app.use('/api/users', require('./features/user/userRoutes'));
 app.use('/api/watch-history', require('./features/watch-history/watchHistoryRoutes'));
+app.use('/api/upload', require('./features/upload/uploadRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({
@@ -76,18 +82,34 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
     console.error('Error:', err);
+    
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'File too large. Maximum 2MB allowed.' 
+        });
+    }
+    
+    if (err.message && err.message.includes('Only image files')) {
+        return res.status(400).json({ 
+            success: false, 
+            message: err.message 
+        });
+    }
+    
     const statusCode = err.status || err.statusCode || 500;
-    const message = err.message || 'Internal Server Error'
+    const message = err.message || 'Internal Server Error';
 
     res.status(statusCode).json({
         success: false,
-        message: message,
+        message,
         ...(process.env.NODE_ENV === 'development' && {
             stack: err.stack,
             details: err.details || null
         })
     });
 });
+
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {

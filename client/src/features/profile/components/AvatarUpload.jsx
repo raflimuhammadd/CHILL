@@ -9,48 +9,25 @@ function AvatarUpload({ avatarSrc, onAvatarChange }) {
     fileInputRef.current?.click();
   };
 
-
-    const handleFileChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-        if (!file) return;
+    if (!file) return;
 
-    const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const size = 150;
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Format harus JPG, PNG, atau WebP');
+      return;
+    }
 
-            const sourceSize = Math.min(img.width, img.height);
-            const offsetX = (img.width - sourceSize) / 2;
-            const offsetY = (img.height - sourceSize) / 2;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Maksimal 2MB');
+      return;
+    }
 
-            ctx.drawImage(img, offsetX, offsetY, sourceSize, sourceSize, 0, 0, size, size);
+    const previewUrl = URL.createObjectURL(file);
+    setPreview(previewUrl);
 
-            const compressed = canvas.toDataURL('image/jpeg', 0.8);
-            setPreview(compressed);
-            onAvatarChange?.(compressed);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
-
-
-//   const handleFileChange = (e) => {
-//     const file = e.target.files?.[0];
-//     if (!file) return;
-
-//     const reader = new FileReader();
-//     reader.onload = (event) => {
-//       setPreview(event.target.result);
-//       onAvatarChange?.(event.target.result);
-//     };
-//     reader.readAsDataURL(file);
-//   };
+    onAvatarChange?.(file);
+  };
 
   return (
     <div className="mb-8 flex items-center gap-4 md:gap-6">

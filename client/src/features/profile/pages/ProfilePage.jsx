@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../../components/shared/Navbar';
 import Footer from '../../../components/shared/Footer';
 import AvatarUpload from '../components/AvatarUpload';
+import {uploadAvatar} from '../../../services/uploadService';
 import ProfileForm from '../components/ProfileForm';
 import SubscriptionCard from '../../subscription/components/SubscriptionCard';
 import MyListGrid from '../../my-list/components/MyListGrid';
@@ -21,7 +22,7 @@ function ProfilePage() {
   const avatarSrc = user?.avatar_url || '/assets/images/profile.png';
   // const isSubscribed = true;
   const isSubscribed = Boolean(user?.isPremium);
-  const [avatarBase64, setAvatarBase64] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   useEffect(() => {
     if (!user) navigate('/login');
@@ -36,10 +37,21 @@ function ProfilePage() {
 
   const handleSave = async (updates) => {
     const payload = {...updates};
-    if (avatarBase64) payload.avatar = avatarBase64;
-    const result = await useAuthStore.getState().updateProfile(payload);
+
+    if (avatarFile) {
+      try {
+        const uploadResult = await uploadAvatar(avatarFile);
+        payload.avatar_url = uploadResult.data.url;
+      } catch (error) {
+        console.error('Upload failed:', error);
+        return {success: false, message: 'Gagal upload foto'};
+      }
+    }
+
+    const result = await useAuthStore.getState().updateProfile(payload)
+
     if (result.success) {
-      setAvatarBase64(null);
+      setAvatarFile(null);
     }
     return result;
   }
@@ -55,7 +67,7 @@ function ProfilePage() {
             <div className="order-2 md:order-1">
               <AvatarUpload 
                   avatarSrc={avatarSrc}
-                  onAvatarChange={setAvatarBase64} 
+                  onAvatarChange={setAvatarFile} 
                 />
               <ProfileForm
                   user={user}
