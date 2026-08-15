@@ -57,11 +57,11 @@ CREATE TABLE users (
   full_name VARCHAR(255) COMMENT 'User display name',
   avatar_url TEXT COMMENT 'Profile picture URL',
   is_premium TINYINT(1) DEFAULT 0 COMMENT '1 = premium user, 0 = free user',
-  email_verification_token VARCHAR(255) UNIQUE NULL COMMENT 'UUID token untuk verifikasi email' AFTER avatar_url,
-  email_verified TINYINT(1) DEFAULT 0 COMMENT '0 = belum verifikasi, 1 = sudah verifikasi' AFTER email_verification_token,
-  email_verified_at DATETIME NULL COMMENT 'Waktu berhasil verifikasi' AFTER email_verified,
-  email_verification_token_expires_at DATETIME NULL COMMENT 'Token kadaluarsa 24 jam setelah register' AFTER email_verified_at;
-  email_verification_sent_at DATETIME NULL COMMENT 'Last time verification email was sent';
+ email_verification_token VARCHAR(255) NULL COMMENT 'UUID token untuk verifikasi email',
+email_verified TINYINT(1) DEFAULT 0 COMMENT '0 = belum verifikasi, 1 = sudah verifikasi',
+email_verified_at DATETIME NULL COMMENT 'Waktu berhasil verifikasi',
+email_verification_token_expires_at DATETIME NULL COMMENT 'Token kadaluarsa 24 jam setelah register',
+email_verification_sent_at DATETIME NULL COMMENT 'Last time verification email was sent',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME COMMENT 'Soft delete timestamp'
