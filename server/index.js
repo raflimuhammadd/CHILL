@@ -71,6 +71,7 @@ app.use('/api/contents', require('./features/content/contentRoutes'));
 app.use('/api/users', require('./features/user/userRoutes'));
 app.use('/api/watch-history', require('./features/watch-history/watchHistoryRoutes'));
 app.use('/api/upload', require('./features/upload/uploadRoutes'));
+app.use('/api/payments', require('./features/payment/paymentRoutes'));
 
 app.use((req, res, next) => {
     res.status(404).json({

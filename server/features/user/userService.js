@@ -10,13 +10,18 @@ class UserService {
     async getProfile(userId) {
         const [rows] = await db.query(
             `SELECT id, email, username, full_name, avatar_url, is_premium,
-            email_verified, created_at
+            email_verified, created_at, subscription_expires_at
             FROM users WHERE id = ? AND deleted_at IS NULL`,
             [userId]
         );
         const user = rows[0];
-        if (!user) {
-            throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
+        if (!user) throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
+
+        if (user.subscription_expires_at && new Date(user.subscription_expires_at) < new Date()) {
+            await db.query('UPDATE users SET is_premium = 0 WHERE id = ?',
+                [userId]
+            );
+        user.is_premium = 0;
         }
         return this._sanitize(user);
     }

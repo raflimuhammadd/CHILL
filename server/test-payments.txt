@@ -1,0 +1,283 @@
+Pre-requisites:
+1. Backend running: npm run dev di folder server/
+2. Database ready: 
+- Migration 03_add_subscription_expiry.sql sudah dijalankan (ALTER TABLE users ADD subscription_expires_at)
+- Seed data subscription_plans sudah ada 3 rows (individual, duo, family)
+3. Midtrans credentials di .env:
+MIDTRANS_IS_PRODUCTION=false
+MIDTRANS_SERVER_KEY=SB-Mid-server-xxxxxx
+MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxxxx
+4. JWT token: Login dulu via POST /api/auth/login → simpan accessToken
+Test Flow (urutan):
+1. Login → dapat token
+2. Create Payment (BCA VA) → dapat order_code + va_number
+3. Simulate payment di Midtrans Dashboard
+4. Verify Payment → cek status jadi succeeded
+5. Check user premium → GET /users/me
+1. Login (dapat JWT token)
+Endpoint: POST http://localhost:3000/api/auth/login
+Headers:
+Content-Type: application/json
+Body (raw JSON):
+{
+  "username": "testuser",
+  "password": "password123"
+}
+Expected Response:
+{
+  "success": true,
+  "message": "User logged in successfully",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "username": "testuser",
+      "email": "test@chill.com",
+      "is_premium": 0
+    }
+  }
+}
+Action: Copy accessToken → pakai di semua request berikutnya.
+2. Create Payment — BCA Virtual Account
+Endpoint: POST http://localhost:3000/api/payments
+Headers:
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Body (raw JSON):
+{
+  "plan_slug": "individual",
+  "payment_method": "bca"
+}
+Expected Response:
+{
+  "success": true,
+  "message": "Pembayaran dibuat",
+  "data": {
+    "order": {
+      "code": "CHILL-A3F7B2D1",
+      "amount": 49990,
+      "status": "pending",
+      "expired_at": "2026-08-16T13:47:26.837Z"
+    },
+    "payment": {
+      "type": "va",
+      "bank": "bca",
+      "va_number": "70012345678901",
+      "expiry_time": "2026-08-16 13:47:26"
+    }
+  }
+}
+Action: Simpan order.code dan payment.va_number.
+3. Simulate Payment di Midtrans Dashboard
+Karena sandbox, gak perlu bayar beneran. Pakai dashboard Midtrans:
+1. Login ke https://dashboard.sandbox.midtrans.com/
+2. Menu Transactions → cari order_id = CHILL-A3F7B2D1
+3. Klik Actions → Change Status → pilih settlement
+4. Midtrans bakal kirim webhook ke backend lu (POST /api/payments/midtrans/notification)
+Atau pakai Postman simulate webhook manual (skip dashboard):
+Endpoint: POST http://localhost:3000/api/payments/midtrans/notification
+Headers:
+Content-Type: application/json
+Body (raw JSON):
+{
+  "transaction_time": "2026-08-15 13:50:00",
+  "transaction_status": "settlement",
+  "transaction_id": "mock-trx-12345",
+  "status_message": "midtrans payment notification",
+  "status_code": "200",
+  "signature_key": "mock-signature",
+  "payment_type": "bank_transfer",
+  "order_id": "CHILL-A3F7B2D1",
+  "merchant_id": "G123456789",
+  "gross_amount": "49990.00",
+  "fraud_status": "accept",
+  "currency": "IDR"
+}
+Note: Signature verification bakal gagal kalau lu manual POST (karena signature salah). Tapi kalau lu udah fix bug backend, webhook handler return 200 anyway (line 55 controller) — jadi gak masalah untuk testing. Atau lu bisa comment sementara line 38 controller (skip .notification() verification):
+// const notif = await paymentService.core.transaction.notification(req.body);
+const notif = req.body; // ✅ bypass verification buat testing manual
+Expected Response:
+{
+  "status_code": 200,
+  "message": "OK"
+}
+4. Verify Payment (manual check)
+Endpoint: POST http://localhost:3000/api/payments/CHILL-A3F7B2D1/verify
+Headers:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Body: (kosong)
+Expected Response:
+{
+  "success": true,
+  "message": "Status pembayaran diperbarui",
+  "data": {
+    "status": "succeeded",
+    "alreadyProcessed": false
+  }
+}
+Ini endpoint recovery "sudah bayar tapi belum premium" — dia hit Midtrans API langsung (transaction.status()), bukan baca DB lokal. Kalau Midtrans bilang settlement, backend update DB + set premium.
+5. Check User Premium Status
+Endpoint: GET http://localhost:3000/api/users/me
+Headers:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Expected Response:
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "username": "testuser",
+    "email": "test@chill.com",
+    "full_name": "Test User",
+    "is_premium": 1,
+    "subscription_expires_at": "2026-09-14T13:47:26.000Z",
+    "email_verified": 0,
+    "created_at": "2026-08-01T10:00:00.000Z"
+  }
+}
+Cek: is_premium: 1 dan subscription_expires_at = NOW + 30 hari.
+6. Test QRIS
+Endpoint: POST http://localhost:3000/api/payments
+Body:
+{
+  "plan_slug": "duo",
+  "payment_method": "qris"
+}
+Expected Response:
+{
+  "success": true,
+  "message": "Pembayaran dibuat",
+  "data": {
+    "order": {
+      "code": "CHILL-B8E3C9F2",
+      "amount": 79990,
+      "status": "pending"
+    },
+    "payment": {
+      "type": "qris",
+      "qr_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+      "expiry_time": "2026-08-16 13:50:00"
+    }
+  }
+}
+Cek: payment.type: 'qris' dan qr_url ada (base64 image).
+7. Test Card (sandbox test card)
+Endpoint: POST http://localhost:3000/api/payments
+Body:
+{
+  "plan_slug": "family",
+  "payment_method": "card",
+  "card": {
+    "cardNumber": "4811111111111114",
+    "expMonth": "12",
+    "expYear": "2030",
+    "cvv": "123"
+  }
+}
+Card test Midtrans sandbox:
+- Success: 4811 1111 1111 1114
+- Fraud challenge: 4911 1111 1111 1113
+- Denied: 4411 1111 1111 1118
+Expected Response:
+{
+  "success": true,
+  "message": "Pembayaran dibuat",
+  "data": {
+    "order": {
+      "code": "CHILL-D2A9F5E8",
+      "amount": 159990,
+      "status": "pending"
+    },
+    "payment": {
+      "type": "card",
+      "transaction_status": "capture",
+      "fraud_status": "accept"
+    }
+  }
+}
+Card sandbox non-3DS langsung capture (kalau authentication: false di service). Status langsung capture + accept = succeeded.
+8. Test GET Payment by Order Code
+Endpoint: GET http://localhost:3000/api/payments/CHILL-A3F7B2D1
+Headers:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Expected Response:
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "plan_id": 1,
+    "order_code": "CHILL-A3F7B2D1",
+    "amount": "49990.00",
+    "status": "paid",
+    "payment_method": "bca",
+    "payment_status": "succeeded",
+    "transaction_id": "mock-trx-12345",
+    "plan_name": "Individual",
+    "price": "49990.00"
+  }
+}
+9. Test Error Cases
+A. Invalid plan_slug:
+{
+  "plan_slug": "premium-ultra",
+  "payment_method": "bca"
+}
+Expected: 404 Not Found — "Plan not found"
+B. Invalid payment_method:
+{
+  "plan_slug": "individual",
+  "payment_method": "paypal"
+}
+Expected: 400 Bad Request — "Invalid payment method"
+C. Verify order milik user lain:
+POST /api/payments/CHILL-ORANG-LAIN/verify
+Expected: Kalau method getPaymentByOrderCode udah filter user_id, bakal return 404 Not Found.
+D. Card ditolak Midtrans:
+{
+  "plan_slug": "individual",
+  "payment_method": "card",
+  "card": {
+    "cardNumber": "4411111111111118",
+    "expMonth": "12",
+    "expYear": "2030",
+    "cvv": "123"
+  }
+}
+Expected: 400 Bad Request — "Transaksi ditolak, coba metode lain"
+10. Test Idempotency (webhook dobel)
+1. Create payment BCA → dapat order_code
+2. Kirim webhook settlement 1x → user jadi premium
+3. Kirim webhook yang sama lagi → response tetap 200, tapi is_premium gak dobel, subscription_expires_at gak berubah
+Check di response verify:
+{
+  "status": "succeeded",
+  "alreadyProcessed": true
+}
+Postman Collection Structure (biar rapi):
+Chill Streams Payment
+├── Auth
+│   └── Login (set token ke environment variable)
+├── Payments
+│   ├── Create Payment - BCA VA
+│   ├── Create Payment - QRIS
+│   ├── Create Payment - Card Success
+│   ├── Create Payment - Card Denied
+│   ├── Get Payment by Order Code
+│   └── Verify Payment Status
+├── Webhook (testing)
+│   ├── Webhook - Settlement
+│   ├── Webhook - Failed
+│   └── Webhook - Expired
+└── User
+    └── Get Me (check premium status)
+Environment variables:
+- base_url: http://localhost:3000
+- token: (auto-set dari login response via test script)
+- order_code: (auto-set dari create payment response)
+Postman test script (auto-save token):
+Di request Login, tab Tests, tambahkan:
+pm.test("Login success", function () {
+    pm.response.to.have.status(200);
+    const res = pm.response.json();
+    pm.environment.set("token", res.data.accessToken);
+});
