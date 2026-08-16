@@ -7,6 +7,12 @@ const { VALIDATION } = require('../../utils/constant');
 const IS_PROD = process.env.MIDTRANS_IS_PRODUCTION === 'true';
 const MIDTRANS_BASE_URL = IS_PROD ? 'https://api.midtrans.com' : 'https://app.sandbox.midtrans.com';
 
+const snap = new midtransClient.Snap({
+    isProduction: IS_PROD,
+    serverKey: process.env.MIDTRANS_SERVER_KEY,
+    clientKey: process.env.MIDTRANS_CLIENT_KEY
+});
+
 const core = new midtransClient.CoreApi({
     isProduction: IS_PROD,
     serverKey: process.env.MIDTRANS_SERVER_KEY,
@@ -19,6 +25,7 @@ const VALID_METHODS = ['card', 'bca', 'qris'];
 class PaymentService {
     constructor() {
         this.core = core;
+        this.snap = snap;
     }
     async createPayment({userId, planSlug, method, card}) {
         if (!VALID_METHODS.includes(method)) {
@@ -86,6 +93,43 @@ class PaymentService {
         };
     }
 
+    async createSnapToken({ userId, planSlug }) {
+        const [plans] = await db.query(
+            'SELECT * FROM subscription_plans WHERE slug = ? AND is_active = 1',
+            [planSlug]
+        );
+        const plan = plans[0];
+        if (!plan) throw new NotFoundError('Plan not found');
+
+        const [users] = await db.query(
+            'SELECT email, full_name FROM users WHERE id = ?',
+            [userId]
+        );
+        const user = users[0] || {};
+        
+        const transaction = await this.snap.createTransaction({
+            transaction_details: {
+                order_id: `CHILL-${uuidv4().split('-')[0].toUpperCase()}`,
+                gross_amount: Number(plan.price),
+            },
+            item_details: [{
+                id: String(plan.id),
+                price: Number(plan.price),
+                quantity: 1,
+                name: plan.name,
+            }],
+            customer_details: {
+                first_name: user.full_name || 'Customer',
+                email: user.email,
+            },
+        });
+
+        return {
+            snap_token: transaction.token,
+            order_code: transaction.order_id,
+        };
+    }
+
     async _buildChargeParam({ orderCode, plan, method, user, card}) {
         const param = {
             transaction_details: {
@@ -150,10 +194,11 @@ class PaymentService {
                 expiry_time: charge.expiry_time
             };
         } else if (method === 'qris') {
-            const qr = charge.actions?.find(a => a.name === 'qr-code');
+            const qrAction = charge.actions?.find((a) => a.name === 'generate-qr-code');
             return { 
                 type: 'qris', 
-                qr_url: qr?.url, 
+                qr_string: charge.qr_string || null,
+                qr_image_url: qrAction?.url || null,
                 expiry_time: charge.expiry_time
             };
 
@@ -219,8 +264,10 @@ class PaymentService {
                     );
                     await conn.query(
                         `UPDATE users
-                        SET is_premium = 1, subscription_expires_at = DATE_ADD(NOW(), INTERVAL ? DAY)
-                        WHERE id = ?`, [order.duration_days, order.user_id]
+                        SET is_premium = 1,
+                            subscription_plan_id = ?,
+                            subscription_expires_at = DATE_ADD(NOW(), INTERVAL ? DAY)
+                        WHERE id = ?`, [order.plan_id, order.duration_days, order.user_id]
                     );
                     await conn.commit();
                 } catch(err) {

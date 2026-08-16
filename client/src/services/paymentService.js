@@ -8,3 +8,6 @@ export const getPayment = async (orderCode) =>
 
 export const verifyPayment = async (orderCode) =>
     (await apiClient.post(`/payments/${orderCode}/verify`)).data;
+
+export const createSnapToken = async (planSlug) =>
+    (await apiClient.post('/payments/snap-token', {plan_slug: planSlug})).data;

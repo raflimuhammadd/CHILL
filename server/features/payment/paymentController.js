@@ -16,9 +16,22 @@ exports.create = async (req, res, next) => {
     }
 }
 
+exports.createSnapToken = async (req, res, next) => {
+    try {
+        const {plan_slug} = req.body || {};
+        const result = await paymentService.createSnapToken({
+            userId: req.user.id,
+            planSlug: plan_slug,
+        });
+        return success (res, result, 'Token snap dibuat', 201);
+    } catch(err) {
+        next(err);
+    }
+}
+
 exports.verify = async (req, res, next) => {
     try {
-        const orderId = req.params.order-code;
+        const orderId = req.params.orderCode;
         const status = await paymentService.core.transaction.status(
             orderId
         );
@@ -66,6 +79,16 @@ exports.getByOrder = async (req, res, next) => {
             req.user.id
         );
         return success(res, result);
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getClientKey = async (req, res, next) => {
+    try {
+        return success(res, { 
+            client_key: process.env.MIDTRANS_CLIENT_KEY 
+        });
     } catch (err) {
         next(err);
     }

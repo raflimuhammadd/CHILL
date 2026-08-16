@@ -58,6 +58,7 @@ CREATE TABLE users (
   avatar_url TEXT COMMENT 'Profile picture URL',
   is_premium TINYINT(1) DEFAULT 0 COMMENT '1 = premium user, 0 = free user',
   subscription_expires_at DATETIME NULL,
+  subscription_plan_id SMALLINT NULL
   email_verification_token VARCHAR(255) NULL COMMENT 'UUID token untuk verifikasi email',
   email_verified TINYINT(1) DEFAULT 0 COMMENT '0 = belum verifikasi, 1 = sudah verifikasi',
   email_verified_at DATETIME NULL COMMENT 'Waktu berhasil verifikasi',

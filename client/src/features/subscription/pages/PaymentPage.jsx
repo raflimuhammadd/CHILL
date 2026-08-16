@@ -8,7 +8,10 @@ import PaymentMethodOption from '../components/PaymentMethodOption';
 import { Icon } from '../../../components';
 import subscriptionPlans from '../data/subscriptionPlans';
 import useAuthStore from '../../auth/store/authStore';
-import { createPayment, verifyPayment } from '../../../services/paymentService';
+import { createPayment, verifyPayment, createSnapToken } from '../../../services/paymentService';
+import { loadMidtransSnap } from '../../../utils/loadMidtransSnap';
+import { QRCodeSVG } from 'qrcode.react';
+import CountdownBox from '../components/CountdownBox';
 
 function PaymentPage() {
     const navigate = useNavigate();
@@ -18,20 +21,28 @@ function PaymentPage() {
     const fetchMe = useAuthStore((s) => s.fetchMe);
 
     const [paymentStatus, setPaymentStatus] = useState('checkout');
+    const [remainingSecs, setRemainingSecs] = useState(null);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [session, setSession] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        if (!selectedPlanId) navigate('/premium');
-    }, [selectedPlanId, navigate]);
-
-        const getMethodLabel = (method) => {
+    const getMethodLabel = (method) => {
         if (method === 'bca') return 'BCA Virtual Account';
         if (method === 'card') return 'Kartu Kredit/Debit';
         if (method === 'qris') return 'QRIS';
         return 'Metode Pembayaran';
     };
+
+    const formatTime = (seconds) => {
+        const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
+        const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        return { hours, mins, secs };
+    };
+
+    useEffect(() => {
+        if (!selectedPlanId) navigate('/premium');
+    }, [selectedPlanId, navigate]);
 
     const formatAmount = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID');
 
@@ -60,14 +71,34 @@ function PaymentPage() {
         if (!selectedMethod) return toast.error('Pilih metode pembayaran dulu');
         setIsLoading(true);
         try {
-            const body = await createPayment({
-                plan_slug: selectedPlanId,
-                payment_method: selectedMethod,
-            });
-            setSession(body.data);
-            setPaymentStatus('waiting');
-            if (selectedMethod === 'card' && body.data?.order?.code) {
-                await checkStatusAsync(body.data.order.code, false);
+            if (selectedMethod === 'card') {
+                const snap = await loadMidtransSnap();
+                const snapData = await createSnapToken(selectedPlanId);
+
+                snap.pay(snapData.data.snap_token, {
+                    onSuccess: async function() {
+                        await fetchMe();
+                        setPaymentStatus('success');
+                    },
+                    onPending: function() {
+                        setPaymentStatus('waiting');
+                    },
+                    onError: function() {
+                        setPaymentStatus('failed');
+                    },
+                    onClose: function() {
+                        toast.info('Pembayaran dibatalkan');
+                        setPaymentStatus('checkout');
+                    },
+                });
+            } else {
+                const body = await createPayment({
+                    plan_slug: selectedPlanId, 
+                    payment_method: selectedMethod,
+                });
+                setRemainingSecs(null);
+                setSession(body.data);
+                setPaymentStatus('waiting');
             }
         } catch (e) {
             toast.error(e?.response?.data?.message || 'Gagal membuat pembayaran');
@@ -103,6 +134,41 @@ function PaymentPage() {
         return () => clearInterval(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paymentStatus, session]);
+
+    useEffect(() => {
+        if (paymentStatus !== 'waiting' || !session?.payment?.expiry_time) return;
+
+        const deadline = new Date(session.payment.expiry_time).getTime();
+        if (isNaN(deadline)) return;
+
+        const tick = () => {
+            const diff = Math.floor((deadline - Date.now()) / 1000);
+            if (diff <= 0) { setRemainingSecs(0); return; }
+            setRemainingSecs(diff);
+        };
+
+        tick();
+        const timer = setInterval(tick, 1000);
+        return () => clearInterval(timer);
+    }, [paymentStatus, session]);
+
+    useEffect(() => {
+        if (remainingSecs !== 0 || !session?.order?.code) return;
+        let cancelled = false;
+
+        verifyPayment(session.order.code)
+            .then((body) => {
+                if (cancelled) return;
+                if (body.data?.status === 'succeeded') {
+                    setPaymentStatus('success');
+                } else {
+                    setPaymentStatus('expired');
+                }
+            })
+            .catch(() => { if (!cancelled) setPaymentStatus('expired'); });
+
+        return () => { cancelled = true; };
+    }, [remainingSecs, session]);
 
     const activePlan = subscriptionPlans.find((p) => p.id === selectedPlanId)
         || subscriptionPlans[0]
@@ -197,6 +263,13 @@ function PaymentPage() {
                                 <>
                                     <section className="mb-6">
                                         <h2 className="text-lg font-bold mb-3">Metode Pembayaran</h2>
+                                    {remainingSecs !== null && remainingSecs > 0 && (
+                                         <CountdownBox
+                                            hours={formatTime(remainingSecs).hours}
+                                            mins={formatTime(remainingSecs).mins}
+                                            secs={formatTime(remainingSecs).secs}
+                                        />
+                                    )}
                                         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/30 bg-[#2F3334]/30">
                                             {selectedMethod === 'bca' && <Icon name="bca" className="w-6 h-6" />}
                                             {selectedMethod === 'card' && (
@@ -251,11 +324,13 @@ function PaymentPage() {
                                         {session?.payment?.type === 'qris' && (
                                             <div className="space-y-4">
                                                 <p className="text-sm text-white/80">Scan QRIS berikut dengan aplikasi pembayaran kamu:</p>
-                                                {session?.payment?.qr_url ? (
-                                                    <img
-                                                        src={session.payment.qr_url}
-                                                        alt="QRIS"
-                                                        className="w-56 h-56 mx-auto rounded-xl bg-white p-3"
+                                                {session?.payment?.qr_string ? (
+                                                    <QRCodeSVG
+                                                        value={session?.payment.qr_string}
+                                                        size={224}
+                                                        bgColor="#FFFFFF"
+                                                        fgColor="#000000"
+                                                        className="mx-auto rounded-xl bg-white p-3"
                                                     />
                                                 ) : (
                                                     <p className="text-sm text-white/60">QR Code tidak tersedia</p>

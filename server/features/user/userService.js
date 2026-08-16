@@ -9,9 +9,13 @@ const emailService = require('../email/emailService');
 class UserService {
     async getProfile(userId) {
         const [rows] = await db.query(
-            `SELECT id, email, username, full_name, avatar_url, is_premium,
-            email_verified, created_at, subscription_expires_at
-            FROM users WHERE id = ? AND deleted_at IS NULL`,
+            `SELECT u.id, u.email, u.username, u.full_name, u.avatar_url, 
+                u.is_premium, u.email_verified, u.created_at, 
+                u.subscription_expires_at,
+                pl.slug AS subscription_plan
+            FROM users u 
+            LEFT JOIN subscription_plans pl ON pl.id = u.subscription_plan_id
+            WHERE u.id = ? AND u.deleted_at IS NULL`,
             [userId]
         );
         const user = rows[0];

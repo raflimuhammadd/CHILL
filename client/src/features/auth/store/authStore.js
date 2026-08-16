@@ -39,7 +39,7 @@ const useAuthStore = create((set) => ({
             const normalizedUser = {
                 ...user,
                 isPremium: Boolean(user.is_premium),
-                subscriptionPlan: null,
+                subscriptionPlan: user.subscription_plan || null,
             };
 
             localStorage.setItem('chill-token', accessToken);
@@ -74,7 +74,7 @@ const useAuthStore = create((set) => ({
             const normalizedUser = {
                 ...user,
                 isPremium: Boolean(user.is_premium),
-                subscriptionPlan: null,
+                subscriptionPlan: user.subscription_plan || null,
             };
 
             localStorage.setItem('chill-user', JSON.stringify(normalizedUser));
@@ -104,7 +104,7 @@ const useAuthStore = create((set) => ({
             const normalizedUser = {
                 ...fresh,
                 isPremium: Boolean(fresh.is_premium),
-                subscriptionPlan: null,
+                subscriptionPlan: fresh.subscription_plan || null,
             };
 
             localStorage.setItem('chill-user', JSON.stringify(normalizedUser));
