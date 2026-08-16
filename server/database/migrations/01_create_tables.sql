@@ -58,7 +58,7 @@ CREATE TABLE users (
   avatar_url TEXT COMMENT 'Profile picture URL',
   is_premium TINYINT(1) DEFAULT 0 COMMENT '1 = premium user, 0 = free user',
   subscription_expires_at DATETIME NULL,
-  subscription_plan_id SMALLINT NULL
+  subscription_plan_id SMALLINT NULL,
   email_verification_token VARCHAR(255) NULL COMMENT 'UUID token untuk verifikasi email',
   email_verified TINYINT(1) DEFAULT 0 COMMENT '0 = belum verifikasi, 1 = sudah verifikasi',
   email_verified_at DATETIME NULL COMMENT 'Waktu berhasil verifikasi',
@@ -66,7 +66,9 @@ CREATE TABLE users (
   email_verification_sent_at DATETIME NULL COMMENT 'Last time verification email was sent',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME COMMENT 'Soft delete timestamp'
+  deleted_at DATETIME COMMENT 'Soft delete timestamp',
+  CONSTRAINT fk_users_subscription_plan
+    FOREIGN KEY (subscription_plan_id) REFERENCES subscription_plans(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User accounts';
 
