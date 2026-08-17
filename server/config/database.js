@@ -1,5 +1,5 @@
 /**
- * Database Connection Pool Config
+ * Database Connection Pooling Config
  */
 
 const mysql = require('mysql2/promise');
