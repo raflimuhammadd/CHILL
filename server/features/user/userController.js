@@ -11,13 +11,7 @@ exports.getMe = async (req, res, next) => {
             throw new NotFoundError('User not found');
         }
         
-        const responseData = { user };
-        
-        if (req.newAccessToken) {
-            responseData.accessToken = req.newAccessToken;
-        }
-        
-        return success(res, responseData);
+        return success(res, user);
     } catch(error) {
         next(error);
     }

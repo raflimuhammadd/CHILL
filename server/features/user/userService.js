@@ -26,9 +26,9 @@ async getProfile(userId) {
         await db.query('UPDATE users SET is_premium = 0 WHERE id = ?', [userId]);
         user.is_premium = 0;
     }
-
-    const favorites = await this.getFavorite(userId);
-    return {...this._sanitize(user), favorites};
+    
+    const favorites = await this.getFavorites(userId);
+    return { ...this._sanitize(user), favorites };
 }
 
 // DENGAN INI:

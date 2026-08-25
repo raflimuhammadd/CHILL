@@ -25,7 +25,6 @@ import useAuthStore from '../features/auth/store/authStore';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
-    const user = useAuthStore((state) => state.user);
     const isLoading = useAuthStore((state) => state.isLoading);
     const fetchMe = useAuthStore((state) => state.fetchMe);
 
@@ -33,7 +32,7 @@ function App() {
         fetchMe();
     }, [fetchMe]);
 
-    if (isLoading && user === undefined) {
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-chill-dark flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white" />

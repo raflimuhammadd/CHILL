@@ -2,13 +2,22 @@ const jwt = require('jsonwebtoken');
 const {AuthError} = require('../utils/error');
 
 module.exports = (req, res, next) => {
+    // Priority 1: Check Authorization header (for API clients)
+    let token = null;
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new AuthError('No token provided, please login first.');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    }
+    
+    // Priority 2: Check accessToken cookie (for browsers)
+    if (!token && req.cookies && req.cookies.accessToken) {
+        token = req.cookies.accessToken;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+        throw new AuthError('No token provided, please login first.');
+    }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);

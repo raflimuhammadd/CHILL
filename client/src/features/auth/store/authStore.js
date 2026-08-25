@@ -18,7 +18,7 @@ const extractErrorMessage = (err) =>
 const useAuthStore = create((set, get) => ({
     accessToken: null,
     user: null,
-    isLoading: false,
+    isLoading: true,
     error: null,
 
     register: async (credentials) => {
@@ -99,22 +99,22 @@ const useAuthStore = create((set, get) => ({
 
         try {
             const result = await getCurrentUser();
-            const { user, accessToken } = result.data;
+            const user = result.data;
 
             const normalizedUser = {
                 ...user,
                 isPremium: Boolean(user.is_premium),
                 subscriptionPlan: user.subscription_plan || null,
+                favorites: user.favorites || [],
             };
 
             set({ 
-                accessToken: accessToken || get().accessToken,
                 user: normalizedUser, 
                 isLoading: false 
             });
         } catch (err) {
             console.error('fetchMe failed:', err);
-            set({ accessToken: null, user: null, isLoading: false });
+            set({ user: null, isLoading: false });
         }
     },
 
@@ -225,7 +225,7 @@ const useAuthStore = create((set, get) => ({
 
     isFavorite: (contentId) => {
         const user = get().user;
-        return user?.favorites?.includes(contentId) || false;
+        return user?.favorites?.some(fav => fav.content_id === contentId) || false;
     },
 }));
 

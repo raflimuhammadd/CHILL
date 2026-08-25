@@ -25,11 +25,21 @@ exports.login = async (req, res, next) => {
             { username, password }, ipAddress, userAgent
         );
 
+        // Set accessToken cookie (15 mins)
+        res.cookie('accessToken', result.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000, // 15 minutes
+            path: '/',
+        });
+
+        // Set refreshToken cookie (30 days)
         res.cookie('refreshToken', result.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 30 * 24 * 60 * 60 * 1000,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
             path: '/',
         });
 
@@ -52,8 +62,19 @@ exports.refreshToken = async (req, res, next) => {
 
         const accessToken = await authService.refreshAccessToken(refreshToken);
 
-        return success(res, {accessToken}, 'Access token refresed');
+        // Set new accessToken cookie
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000, // 15 minutes
+            path: '/',
+        });
+
+        return success(res, { accessToken }, 'Access token refreshed');
     } catch (error) {
+        res.clearCookie('refreshToken');
+        res.clearCookie('accessToken');
         next(error);
     }
 };
@@ -61,7 +82,11 @@ exports.refreshToken = async (req, res, next) => {
 exports.logout = async (req, res, next) => {
     try {
         await authService.logout(req.user.id);
+        
+        // Clear both cookies
+        res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
+        
         return success(res, null, 'Logged out successfully');
     } catch (error) {
         next(error);
