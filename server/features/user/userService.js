@@ -7,6 +7,29 @@ const { validateEmail } = require('../../utils/validators');
 const emailService = require('../email/emailService');
 
 class UserService {
+// GANTI INI:
+async getProfile(userId) {
+    const [rows] = await db.query(
+        `SELECT u.id, u.email, u.username, u.full_name, u.avatar_url, 
+            u.is_premium, u.email_verified, u.created_at, 
+            u.subscription_expires_at,
+            pl.slug AS subscription_plan
+        FROM users u 
+        LEFT JOIN subscription_plans pl ON pl.id = u.subscription_plan_id
+        WHERE u.id = ? AND u.deleted_at IS NULL`,
+        [userId]
+    );
+    const user = rows[0];
+    if (!user) throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
+
+    if (user.subscription_expires_at && new Date(user.subscription_expires_at) < new Date()) {
+        await db.query('UPDATE users SET is_premium = 0 WHERE id = ?', [userId]);
+        user.is_premium = 0;
+    }
+    return this._sanitize(user);
+}
+
+// DENGAN INI:
     async getProfile(userId) {
         const [rows] = await db.query(
             `SELECT u.id, u.email, u.username, u.full_name, u.avatar_url, 
@@ -22,12 +45,13 @@ class UserService {
         if (!user) throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
 
         if (user.subscription_expires_at && new Date(user.subscription_expires_at) < new Date()) {
-            await db.query('UPDATE users SET is_premium = 0 WHERE id = ?',
-                [userId]
-            );
-        user.is_premium = 0;
+            await db.query('UPDATE users SET is_premium = 0 WHERE id = ?', [userId]);
+            user.is_premium = 0;
         }
-        return this._sanitize(user);
+        
+        const favorites = await this.getFavorites(userId);
+        
+        return { ...this._sanitize(user), favorites };
     }
 
     async updateProfile(userId, data) {
@@ -101,6 +125,36 @@ class UserService {
         }
 
         return this.getProfile(userId);
+    }
+
+    async getFavorite(userId) {
+        const [rows] = await db.query(
+            `SELECT f.content_id, f.notes, f.added_at,
+                c.title, c.slug, c.content_type, c.poster_url,
+                c.banner_url, c.rating, c.release_year, c.age_rating,
+                c.is_premium_only
+            FROM favorites f
+            INNER JOIN contents c ON f.content_id = c.id
+            WHERE f.user_id = ?
+            ORDER BY f.added_at DESC`,
+            [userId]
+        );
+        return rows;
+    }
+
+    async removeFavorite(userId, contentId) {
+        const [result] = await db.query(
+            `DELETE FROM favorites WHERE user_id = ? AND content_id = ?`,
+            [userId, contentId]
+        );
+
+        if (result.affectedRows === 0) {
+            throw new NotFoundError('Favorite not found');
+        }
+        
+        return {
+            success: true
+        };
     }
 
     _sanitize(user) {

@@ -1,44 +1,51 @@
 import { create } from "zustand";
+import useAuthStore from "../../auth/store/authStore";
 
 const useFavoritesStore = create((set, get) => ({
-    // state
-    favorites: JSON.parse(localStorage.getItem('chill-favorites')) || [],
-    favoriteOverrides: JSON.parse(localStorage.getItem('chill-overrides')) 
-    || {},
+    favoriteOverrides: {},
 
-    // actions create
-    addToFavorites: (id) => {
-        const {favorites} = get();
-        if (!favorites.includes(id)) {
-            const newFavorites = [...favorites, id];
-            localStorage.setItem('chill-favorites', JSON.stringify(newFavorites));
-            set({favorites: newFavorites});
+    addToFavorites: async (id) => {
+        const success = await useAuthStore.getState().addToFavorites(id);
+        return success;
+    },
+
+    removeFromFavorites: async (id) => {
+        const success = await useAuthStore.getState().removeFromFavorites(id);
+        return success;
+    },
+
+    clearFavorites: async () => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        
+        const favorites = user.favorites || [];
+        for (const contentId of favorites) {
+            await useAuthStore.getState().removeFromFavorites(contentId);
         }
     },
-    removeFromFavorites: (id) => {
-        const newFavorites = get().favorites.filter(favId => favId !== id);
-        localStorage.setItem('chill-favorites', JSON.stringify(newFavorites));
-        set({favorites: newFavorites});
-    },
-    clearFavorites: () => {
-        localStorage.removeItem('chill-favorites');
-        set({favorites: []});
-    },
+
     updateFavoriteItem: (id, updates) => {
-    const { favoriteOverrides } = get();
-    const newOverrides = {
-        ...favoriteOverrides,
-        [id]: { ...favoriteOverrides[id], ...updates }
-    };
-        localStorage.setItem('chill-overrides', JSON.stringify(newOverrides));
+        const { favoriteOverrides } = get();
+        const newOverrides = {
+            ...favoriteOverrides,
+            [id]: { ...favoriteOverrides[id], ...updates }
+        };
         set({ favoriteOverrides: newOverrides });
     },
-    isFavorite: (id) => get().favorites.includes(id),
 
+    isFavorite: (id) => {
+        return useAuthStore.getState().isFavorite(id);
+    },
 
+    getFavorites: () => {
+        const user = useAuthStore.getState().user;
+        return user?.favorites || [];
+    },
 
     getFavoriteItems: (allFilms = []) => {
-        const {favorites, favoriteOverrides} = get();
+        const favorites = get().getFavorites();
+        const { favoriteOverrides } = get();
+        
         return favorites
             .map(id => {
                 const film = allFilms.find(f => f.id === id);

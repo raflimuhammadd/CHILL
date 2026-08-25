@@ -161,7 +161,7 @@ class AuthService {
         return {message: 'Verification email sent'};
     }
 
-    async login({ username, password }) {
+    async login({ username, password }, ipAddress, userAgent) {
         if (!username || !password) {
             throw new ValidationError('Username and password are required');
         }
@@ -182,9 +182,22 @@ class AuthService {
             throw new AuthError('Invalid username or password');
         }
 
+        await this.cleanupExpiredTokens(user.id);
+
+        const accessToken = this.generateAccessToken(user);
+        const refreshToken = this.generateRefreshToken();
+        
+        await this.storeRefreshToken(
+            user.id, refreshToken, user.refresh_token_version, ipAddress, userAgent
+        );
+
+        const sanitizedUser = this._sanitize(user);
+        const favorites = await this._getFavorites(user.id);
+
         return {
-            accessToken: this.generateToken(user),
-            user: this._sanitize(user),
+            accessToken,
+            refreshToken,
+            user: {...sanitizedUser, favorites},
         };
     }
 
@@ -196,16 +209,40 @@ class AuthService {
         return rows[0];
     }
 
-    generateToken(user) {
+    generateAccessToken(user) {
         return jwt.sign(
             {
                 id: user.id,
                 username: user.username,
+                tokenVersion: user.refresh_token_version,
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+                expiresIn: '15m'
             }
+        );
+    }
+
+    generateRefreshToken() {
+        return require('uuid').v4();
+    }
+
+    async storeRefreshToken(userId, refreshToken, tokenVersion, ipAddress, userAgent) {
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await db.query(
+            `INSERT INTO refresh_tokens
+            (user_id, token, token_version, expires_at, ip_address, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [userId, refreshToken, tokenVersion, expiresAt, ipAddress, userAgent]
+        );
+        return expiresAt;
+    }
+
+    async cleanupExpiredTokens(userId) {
+        await db.query(
+            'DELETE FROM refresh_tokens WHERE user_id = ? AND expires_at < NOW()',
+            [userId]
         );
     }
 
@@ -225,6 +262,81 @@ class AuthService {
         );
         return rows[0];
     }
+
+    async verifyRefreshToken(refreshToken) {
+        if (!refreshToken) {
+            throw new AuthError('Refresh token required');
+        }
+
+        const [rows] = await db.query(
+            `SELECT rt.*, u.refresh_token_version, u.username
+            FROM refresh_tokens rt
+            INNER JOIN users u ON rt.user_id = u.id
+            WHERE rt.token = ? AND u.deleted_at IS NULL`,
+            [refreshToken]
+        );
+
+        const tokenRecord = rows[0];
+
+        if (!tokenRecord) {
+            throw new AuthError('Invalid refresh token');
+        }
+
+        if (new Date(tokenRecord.expires_at) < new Date()) {
+            await db.query('DELETE FROM refresh_tokens WHERE id = ?',
+                [tokenRecord.id]
+            );
+            throw new AuthError('Refresh token expired');
+        }
+
+        if (tokenRecord.token_version !== tokenRecord.refresh_token_version) {
+            throw new AuthError('Refresh token revoked');
+        }
+
+        await db.query(
+            'UPDATE refresh_tokens SET last_used_at = NOW() WHERE id = ?',
+            [tokenRecord.id]
+        );
+
+        return {
+            id: tokenRecord.user_id,
+            username: tokenRecord.username,
+            refresh_token_version: tokenRecord.refresh_token_version,
+        };
+    }
+
+    async refreshAccessToken(refreshToken) {
+        const user = await this.verifyRefreshToken(refreshToken);
+        return this.generateAccessToken(user);
+    }
+
+    async logout(userId) {
+        await db.query(
+            'UPDATE users SET refresh_token_version = refresh_token_version + 1 WHERE id = ?',
+            [userId]
+        );
+
+        await db.query('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
+
+        return {
+            message: 'Logged out successfully'
+        };
+    }
+
+    async _getFavorites(userId) {
+    const [rows] = await db.query(
+        `SELECT f.content_id, f.notes, f.added_at,
+                c.title, c.slug, c.content_type, c.poster_url, 
+                c.banner_url, c.rating, c.release_year, c.age_rating,
+                c.is_premium_only
+         FROM favorites f
+         INNER JOIN contents c ON f.content_id = c.id
+         WHERE f.user_id = ?
+         ORDER BY f.added_at DESC`,
+        [userId]
+    );
+    return rows;
+}
 
     _sanitize(user) {
         if (!user) return null;

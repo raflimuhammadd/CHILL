@@ -21,6 +21,7 @@ graphify-out/
 logs/
 *.log
 npm-debug.log*
+cookies.txt
 
 # OS
 .DS_Store

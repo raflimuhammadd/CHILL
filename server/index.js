@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { uploadAvatar } = require('./features/upload/uploadController');
 require ('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 const app = express();
 app.use(cors({
@@ -12,6 +13,8 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
+
+app.use(cookieParser());
 
 app.use(express.json());
 

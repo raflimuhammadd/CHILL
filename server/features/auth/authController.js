@@ -19,13 +19,54 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     try {
         const { username, password } = req.body || {};
-        const result = await authService.login({ username, password });
+        const ipAddress = req.ip || req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+        const result = await authService.login(
+            { username, password }, ipAddress, userAgent
+        );
 
-        return success(res, result, 'User logged in successfully');
+        res.cookie('refreshToken', result.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            path: '/',
+        });
+
+        return success(res, {
+            accessToken: result.accessToken,
+            user: result.user,
+        }, 'User logged in successfully');
     } catch (error) {
         next(error);
     }
 };
+
+exports.refreshToken = async (req, res, next) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+
+        if (!refreshToken) {
+            throw new AuthError('Refresh token required');
+        }
+
+        const accessToken = await authService.refreshAccessToken(refreshToken);
+
+        return success(res, {accessToken}, 'Access token refresed');
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.logout = async (req, res, next) => {
+    try {
+        await authService.logout(req.user.id);
+        res.clearCookie('refreshToken');
+        return success(res, null, 'Logged out successfully');
+    } catch (error) {
+        next(error);
+    }
+}
 
 exports.verifyEmail = async (req, res, next) => {
     try {
