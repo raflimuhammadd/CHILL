@@ -99,7 +99,7 @@ const useAuthStore = create((set, get) => ({
 
         try {
             const result = await getCurrentUser();
-            const user = result.data;
+            const { user, accessToken } = result.data;
 
             const normalizedUser = {
                 ...user,
@@ -107,15 +107,11 @@ const useAuthStore = create((set, get) => ({
                 subscriptionPlan: user.subscription_plan || null,
             };
 
-            let favorites = [];
-            try {
-                const favResult = await getFavorites();
-                favorites = favResult.data || [];
-            } catch (e) {
-                console.error('Failed to fetch favorites:', e);
-            }
-
-            set({ user: { ...normalizedUser, favorites }, isLoading: false });
+            set({ 
+                accessToken: accessToken || get().accessToken,
+                user: normalizedUser, 
+                isLoading: false 
+            });
         } catch (err) {
             console.error('fetchMe failed:', err);
             set({ accessToken: null, user: null, isLoading: false });

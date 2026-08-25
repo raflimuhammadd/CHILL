@@ -40,8 +40,8 @@ export const getFavorites = async () => {
     return response.data;
 }
 
-export const addFavorite = async (contentId) => {
-    const response = await apiClient.post('/users/favorites', { contentId });
+export const addFavorite = async (contentId, notes = null) => {
+    const response = await apiClient.post('/users/favorites', { contentId, notes });
     return response.data;
 }
 

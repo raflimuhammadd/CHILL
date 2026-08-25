@@ -26,7 +26,9 @@ async getProfile(userId) {
         await db.query('UPDATE users SET is_premium = 0 WHERE id = ?', [userId]);
         user.is_premium = 0;
     }
-    return this._sanitize(user);
+
+    const favorites = await this.getFavorite(userId);
+    return {...this._sanitize(user), favorites};
 }
 
 // DENGAN INI:
@@ -155,6 +157,44 @@ async getProfile(userId) {
         return {
             success: true
         };
+    }
+
+    async getFavorites(userId) {
+        const [rows] = await db.query(
+            `SELECT f.content_id, f.notes, f.added_at,
+                    c.title, c.slug, c.content_type, c.poster_url, 
+                    c.banner_url, c.rating, c.release_year, c.age_rating,
+                    c.is_premium_only
+            FROM favorites f
+            INNER JOIN contents c ON f.content_id = c.id
+            WHERE f.user_id = ?
+            ORDER BY f.added_at DESC`,
+            [userId]
+        );
+        return rows;
+    }
+
+    async addFavorite(userId, contentId, notes = null) {
+        await db.query(
+            `INSERT INTO favorites (user_id, content_id, notes) 
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE notes = VALUES(notes)`,
+            [userId, contentId, notes]
+        );
+        return { success: true };
+    }
+
+    async removeFavorite(userId, contentId) {
+        const [result] = await db.query(
+            `DELETE FROM favorites WHERE user_id = ? AND content_id = ?`,
+            [userId, contentId]
+        );
+        
+        if (result.affectedRows === 0) {
+            throw new NotFoundError('Favorite not found');
+        }
+        
+        return { success: true };
     }
 
     _sanitize(user) {
