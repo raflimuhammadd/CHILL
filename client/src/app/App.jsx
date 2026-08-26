@@ -26,11 +26,11 @@ import { Toaster } from 'react-hot-toast';
 
 function App() {
     const isLoading = useAuthStore((state) => state.isLoading);
-    const fetchMe = useAuthStore((state) => state.fetchMe);
+    const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
     useEffect(() => {
-        fetchMe();
-    }, [fetchMe]);
+        initializeAuth();
+    }, []);
 
     if (isLoading) {
         return (

@@ -1,5 +1,6 @@
 const authService = require('./authService');
 const { success } = require('../../utils/apiResponse');
+const {AuthError} = require ('../../utils/error');
 
 exports.register = async (req, res, next) => {
     try {

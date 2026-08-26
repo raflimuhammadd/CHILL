@@ -7,31 +7,6 @@ const { validateEmail } = require('../../utils/validators');
 const emailService = require('../email/emailService');
 
 class UserService {
-// GANTI INI:
-async getProfile(userId) {
-    const [rows] = await db.query(
-        `SELECT u.id, u.email, u.username, u.full_name, u.avatar_url, 
-            u.is_premium, u.email_verified, u.created_at, 
-            u.subscription_expires_at,
-            pl.slug AS subscription_plan
-        FROM users u 
-        LEFT JOIN subscription_plans pl ON pl.id = u.subscription_plan_id
-        WHERE u.id = ? AND u.deleted_at IS NULL`,
-        [userId]
-    );
-    const user = rows[0];
-    if (!user) throw new NotFoundError(MESSAGES.USER_NOT_FOUND);
-
-    if (user.subscription_expires_at && new Date(user.subscription_expires_at) < new Date()) {
-        await db.query('UPDATE users SET is_premium = 0 WHERE id = ?', [userId]);
-        user.is_premium = 0;
-    }
-    
-    const favorites = await this.getFavorites(userId);
-    return { ...this._sanitize(user), favorites };
-}
-
-// DENGAN INI:
     async getProfile(userId) {
         const [rows] = await db.query(
             `SELECT u.id, u.email, u.username, u.full_name, u.avatar_url, 
@@ -181,19 +156,6 @@ async getProfile(userId) {
             ON DUPLICATE KEY UPDATE notes = VALUES(notes)`,
             [userId, contentId, notes]
         );
-        return { success: true };
-    }
-
-    async removeFavorite(userId, contentId) {
-        const [result] = await db.query(
-            `DELETE FROM favorites WHERE user_id = ? AND content_id = ?`,
-            [userId, contentId]
-        );
-        
-        if (result.affectedRows === 0) {
-            throw new NotFoundError('Favorite not found');
-        }
-        
         return { success: true };
     }
 

@@ -18,8 +18,28 @@ const extractErrorMessage = (err) =>
 const useAuthStore = create((set, get) => ({
     accessToken: null,
     user: null,
-    isLoading: true,
+    isLoading: false,
     error: null,
+
+    initialized: false,
+
+    initializeAuth: async () => {
+        if (get().initialized) return;
+
+        set({isLoading: true});
+        try {
+            const result = await getCurrentUser();
+            const user = result.data;
+            const normalizedUser = {
+                ...user,
+                isPremium: Boolean(user.is_premium),
+                subscriptionPlan: user.subscription_plan || null,
+            };
+            set({user: normalizedUser, isLoading: false, initialized: true});
+        } catch {
+            set({isLoading: false, initialized: true})
+        }
+    },
 
     register: async (credentials) => {
         set({ isLoading: true, error: null });
@@ -42,27 +62,18 @@ const useAuthStore = create((set, get) => ({
             });
             
             const { accessToken, user } = result.data;
-
             const normalizedUser = {
                 ...user,
                 isPremium: Boolean(user.is_premium),
                 subscriptionPlan: user.subscription_plan || null,
             };
 
-            let favorites = [];
-            try {
-                const favResult = await getFavorites();
-                favorites = favResult.data || [];
-            } catch (e) {
-                console.error('Failed to fetch favorites:', e);
-            }
-
             set({ 
                 accessToken, 
-                user: { ...normalizedUser, favorites }, 
+                user: normalizedUser, 
                 isLoading: false 
             });
-            
+
             return true;
         } catch (err) {
             set({ error: extractErrorMessage(err), isLoading: false });
@@ -196,11 +207,11 @@ const useAuthStore = create((set, get) => ({
     addToFavorites: async (contentId) => {
         try {
             await addFavorite(contentId);
+            const result = await getFavorites();
             const currentUser = get().user;
             if (!currentUser) return false;
             
-            const newFavorites = [...(currentUser.favorites || []), contentId];
-            set({ user: { ...currentUser, favorites: newFavorites } });
+            set({ user: { ...currentUser, favorites: result.data || [] } });
             return true;
         } catch (err) {
             console.error('Add favorite failed:', err);
@@ -211,11 +222,11 @@ const useAuthStore = create((set, get) => ({
     removeFromFavorites: async (contentId) => {
         try {
             await removeFavorite(contentId);
+            const result = await getFavorites();
             const currentUser = get().user;
             if (!currentUser) return false;
             
-            const newFavorites = (currentUser.favorites || []).filter(id => id !== contentId);
-            set({ user: { ...currentUser, favorites: newFavorites } });
+            set({ user: { ...currentUser, favorites: result.data || [] } });
             return true;
         } catch (err) {
             console.error('Remove favorite failed:', err);
@@ -225,7 +236,11 @@ const useAuthStore = create((set, get) => ({
 
     isFavorite: (contentId) => {
         const user = get().user;
-        return user?.favorites?.some(fav => fav.content_id === contentId) || false;
+        if (!user?.favorites) return false;
+        return user.favorites.some(fav =>
+            fav.content_id === contentId ||
+            fav === contentId
+        );
     },
 }));
 

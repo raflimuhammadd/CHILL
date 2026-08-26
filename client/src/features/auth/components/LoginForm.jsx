@@ -38,7 +38,9 @@ function LoginForm() {
        if (Object.keys(formErrors).length > 0) return setErrors(formErrors);
        
        const success = await login(formData);
-       if (success) navigate('/home'); 
+       if (success) {
+        setTimeout(() => navigate('/home'), 100);
+       }
     };
 
     return (

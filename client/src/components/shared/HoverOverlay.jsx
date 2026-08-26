@@ -3,6 +3,7 @@ import Icon from '../ui/Icon';
 import {useFavorites} from '../../hooks/useFavorites';
 import useModalStore from '../../store/modalStore';
 import useEditModalStore from '../../store/editModalStore';
+import {useState} from 'react';
 
 function HoverOverlay({film, variant = 'default'}) {
     const navigate = useNavigate();
@@ -10,11 +11,13 @@ function HoverOverlay({film, variant = 'default'}) {
     const {isFavorite, addToFavorites, removeFromFavorites} = useFavorites();
     const favorited = isFavorite(film.id);
     const {openEditModal} = useEditModalStore();
+    const [isLoading, setIsLoading] = useState(false);
 
     const handlePlay = (e) => {
         e.stopPropagation();
         if (film.isBlocked) {
-            navigate(`/watch/${film.id}`);
+            openModal(film);
+            return;
         }
         navigate(`/watch/${film.id}`);
     };
@@ -27,6 +30,17 @@ function HoverOverlay({film, variant = 'default'}) {
             addToFavorites(film.id);
         }
     };
+
+    const handleAddFavorite = async () => {
+        setIsLoading(true);
+        try {
+            await toggleFavorite();
+        } catch (err) {
+            console.error('Failed to add favorite:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
     if (variant === 'mylist') {
         return (
@@ -91,7 +105,8 @@ function HoverOverlay({film, variant = 'default'}) {
                 {/* action buttons */}
                 <div className="hover-overlay-actions relative flex items-center justify-center gap-4 p-4">
                     <button
-                        onClick={toggleFavorite}
+                        onClick={handleAddFavorite}
+                        disabled={isLoading}
                         className="hover-overlay-button hover-overlay-button--favorite
                             w-10 h-10 rounded-full bg-white/20 hover:bg-white/30
                             flex items-center justify-center text-white transition"
