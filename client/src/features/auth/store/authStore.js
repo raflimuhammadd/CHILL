@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import apiClient from '../../../services/client';
 import {
     registerUser,
     loginUser,
@@ -24,12 +25,34 @@ const useAuthStore = create((set, get) => ({
     initialized: false,
 
     initializeAuth: async () => {
-        if (get().initialized) return;
+        if (get().initialized && get().user) return;
+
+        // Check if user already exists from login
+        const currentUser = get().user;
+        // NEW: Check localStorage if not in Zustand
+        let { accessToken } = get();
+        if (!accessToken) {
+            accessToken = localStorage.getItem('accessToken');
+        }
+
+        if (!accessToken) {
+            set({ initialized: true });
+            return;
+        }
+
+        // If user already exists from login, just mark as initialized (don't show spinner)
+        if (currentUser) {
+            set({ initialized: true });
+            return;
+        }
+
+        // NEW: Add Authorization header manually
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
         set({isLoading: true});
         try {
             const result = await getCurrentUser();
-            const user = result.data;
+            const user = result;
             const normalizedUser = {
                 ...user,
                 isPremium: Boolean(user.is_premium),
@@ -39,6 +62,9 @@ const useAuthStore = create((set, get) => ({
         } catch {
             set({isLoading: false, initialized: true})
         }
+        
+        // NEW: Clean up header
+        delete apiClient.defaults.headers.common['Authorization'];
     },
 
     register: async (credentials) => {
@@ -54,14 +80,14 @@ const useAuthStore = create((set, get) => ({
     },
 
     login: async (credentials) => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true, error: null, initialized: false });
         try {
             const result = await loginUser({
                 username: credentials.username,
                 password: credentials.password,
             });
             
-            const { accessToken, user } = result.data;
+            const { accessToken, user } = result;
             const normalizedUser = {
                 ...user,
                 isPremium: Boolean(user.is_premium),
@@ -73,6 +99,7 @@ const useAuthStore = create((set, get) => ({
                 user: normalizedUser, 
                 isLoading: false 
             });
+            localStorage.setItem('accessToken', accessToken);
 
             return true;
         } catch (err) {
@@ -87,14 +114,15 @@ const useAuthStore = create((set, get) => ({
         } catch (err) {
             console.error('Logout error:', err);
         } finally {
-            set({ accessToken: null, user: null, error: null });
+            set({ accessToken: null, user: null, error: null, initialized: false });
+            localStorage.removeItem('accessToken');
         }
     },
 
     refreshToken: async () => {
         try {
             const result = await refreshAccessToken();
-            const { accessToken } = result.data;
+            const { accessToken } = result;
             
             set({ accessToken });
             return accessToken;
@@ -110,7 +138,7 @@ const useAuthStore = create((set, get) => ({
 
         try {
             const result = await getCurrentUser();
-            const user = result.data;
+            const user = result;
 
             const normalizedUser = {
                 ...user,
@@ -141,7 +169,7 @@ const useAuthStore = create((set, get) => ({
             }
 
             const result = await updateUser(payload);
-            const fresh = result.data;
+            const fresh = result;
 
             const normalizedUser = {
                 ...fresh,

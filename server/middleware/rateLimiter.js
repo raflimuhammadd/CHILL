@@ -6,6 +6,7 @@
 
 const rateLimit = require('express-rate-limit');
 const { STATUS_CODES, MESSAGES, RATE_LIMIT } = require('../utils/constant');
+const { ipKeyGenerator } = require('express-rate-limit'); 
 
 function rateLimitHandler(req, res) {
     return res.status(STATUS_CODES.TOO_MANY_REQUESTS).json({
@@ -48,10 +49,7 @@ const generalLimiter = rateLimit({
     },
     
     // Key generator (default: IP address)
-    keyGenerator: (req) => {
-        // Use IP address dari proxy-aware headers
-        return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    }
+    keyGenerator: ipKeyGenerator,
 });
 
 /**
@@ -77,9 +75,7 @@ const authLimiter = rateLimit({
         return process.env.NODE_ENV === 'development';
     },
     
-    keyGenerator: (req) => {
-        return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    }
+    keyGenerator: ipKeyGenerator,
 });
 
 /**
@@ -106,9 +102,7 @@ const strictLimiter = rateLimit({
         return process.env.NODE_ENV === 'development';
     },
     
-    keyGenerator: (req) => {
-        return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    }
+    keyGenerator: ipKeyGenerator,
 });
 
 

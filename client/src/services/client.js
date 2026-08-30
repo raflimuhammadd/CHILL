@@ -24,11 +24,16 @@ const addRefreshSubscriber = (callback) => {
 
 apiClient.interceptors.request.use(
     (config) => {
-        const { accessToken } = useAuthStore.getState();
         
-        if (accessToken && !config.url.includes('/refresh-token')) {
-            config.headers['Authorization'] = `Bearer ${accessToken}`;
-        }
+    let { accessToken } = useAuthStore.getState();
+
+    if (!accessToken) {
+        accessToken = localStorage.getItem('accessToken');
+    }
+
+    if (accessToken && !config.url.includes('/refresh-token')) {
+        config.headers['Authorization'] = `Bearer ${accessToken}`;
+    }
         
         return config;
     },

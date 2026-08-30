@@ -5,6 +5,7 @@ const path = require('path');
 const { uploadAvatar } = require('./features/upload/uploadController');
 require ('dotenv').config();
 const cookieParser = require('cookie-parser');
+const {generalLimiter} = require('./middleware/rateLimiter');
 
 const app = express();
 app.use(cors({
@@ -15,9 +16,9 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-
 app.use(express.json());
 
+// Development logging
 if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {
         const timestamp = new Date().toISOString();
@@ -28,6 +29,10 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// rate limiting
+app.use(generalLimiter);
+
+// health check
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
