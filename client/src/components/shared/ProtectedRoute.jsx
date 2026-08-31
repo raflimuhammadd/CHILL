@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../../features/auth/store/authStore';
 
 function ProtectedRoute({ children }) {
-     const user = useAuthStore()
+     const user = useAuthStore(((state) => state.user));
      const location = useLocation();
 
     if (!user) {

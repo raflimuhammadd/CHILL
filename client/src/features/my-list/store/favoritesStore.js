@@ -19,8 +19,8 @@ const useFavoritesStore = create((set, get) => ({
         if (!user) return;
         
         const favorites = user.favorites || [];
-        for (const contentId of favorites) {
-            await useAuthStore.getState().removeFromFavorites(contentId);
+        for (const fav of favorites) {
+            await useAuthStore.getState().removeFromFavorites(fav.content_id);
         }
     },
 
@@ -47,10 +47,10 @@ const useFavoritesStore = create((set, get) => ({
         const { favoriteOverrides } = get();
         
         return favorites
-            .map(id => {
-                const film = allFilms.find(f => f.id === id);
+            .map(fav => {
+                const film = allFilms.find(f => String(f.id) === String(fav.content_id));
                 if (!film) return null;
-                const override = favoriteOverrides[id] || {};
+                const override = favoriteOverrides[fav.content_id] || {};
                 return {...film, ...override};
             })
             .filter(Boolean);

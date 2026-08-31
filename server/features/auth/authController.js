@@ -17,6 +17,14 @@ exports.register = async (req, res, next) => {
     }
 };
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+const cookieConfig = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+}
 exports.login = async (req, res, next) => {
     try {
         const { username, password } = req.body || {};
@@ -28,20 +36,15 @@ exports.login = async (req, res, next) => {
 
         // Set accessToken cookie (15 mins)
         res.cookie('accessToken', result.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            ...cookieConfig,
             maxAge: 15 * 60 * 1000, // 15 minutes
             path: '/',
         });
 
         // Set refreshToken cookie (30 days)
         res.cookie('refreshToken', result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            ...cookieConfig,
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-            path: '/',
         });
 
         return success(res, {
@@ -65,11 +68,8 @@ exports.refreshToken = async (req, res, next) => {
 
         // Set new accessToken cookie
         res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            ...cookieConfig,
             maxAge: 15 * 60 * 1000, // 15 minutes
-            path: '/',
         });
 
         return success(res, { accessToken }, 'Access token refreshed');

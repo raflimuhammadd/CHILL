@@ -24,9 +24,7 @@ function MyListPage () {
   // filter logic
   const filteredItems = {
     all: allItems,
-    series: allItems.filter(item => item.episodes && item.episodes.includes(
-      'Episode'
-    )),
+    series: allItems.filter(item => item.totalEpisodes !== undefined),
     film: allItems.filter(item => item.duration !== undefined)
   };
 

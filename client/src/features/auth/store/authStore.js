@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import apiClient from '../../../services/client';
 import {
     registerUser,
     loginUser,
@@ -27,44 +26,52 @@ const useAuthStore = create((set, get) => ({
     initializeAuth: async () => {
         if (get().initialized && get().user) return;
 
-        // Check if user already exists from login
-        const currentUser = get().user;
-        // NEW: Check localStorage if not in Zustand
+        // const currentUser = get().user;
         let { accessToken } = get();
         if (!accessToken) {
             accessToken = localStorage.getItem('accessToken');
         }
 
-        if (!accessToken) {
-            set({ initialized: true });
-            return;
+        if (accessToken) {
+            try {
+                const result = await getCurrentUser();
+                const normalizedUser = {
+                    ...result,
+                    isPremium: Boolean(result.is_premium),
+                    subscriptionPlan: result.subscription_plan || null,
+                };
+                set({
+                    accessToken,
+                    user: normalizedUser,
+                    isLoading: false,
+                    initialized: true,
+                });
+                return;
+            } catch {
+                localStorage.removeItem('accessToken');
+            }
         }
-
-        // If user already exists from login, just mark as initialized (don't show spinner)
-        if (currentUser) {
-            set({ initialized: true });
-            return;
+        if (!get().user) {
+            try {
+                const { accessToken: newAccessToken } = await refreshAccessToken();
+                const result = await getCurrentUser();
+                const normalizedUser = {
+                    ...result,
+                    isPremium: Boolean(result.is_premium),
+                    subscriptionPlan: result.subscription_plan || null,
+                };
+                set({
+                    accessToken: newAccessToken,
+                    user: normalizedUser,
+                    isLoading: false,
+                    initialized: true,
+                });
+                localStorage.setItem('accessToken', newAccessToken);
+                return;
+            } catch  {
+                set({initialized: true})
+            }
         }
-
-        // NEW: Add Authorization header manually
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-        set({isLoading: true});
-        try {
-            const result = await getCurrentUser();
-            const user = result;
-            const normalizedUser = {
-                ...user,
-                isPremium: Boolean(user.is_premium),
-                subscriptionPlan: user.subscription_plan || null,
-            };
-            set({user: normalizedUser, isLoading: false, initialized: true});
-        } catch {
-            set({isLoading: false, initialized: true})
-        }
-        
-        // NEW: Clean up header
-        delete apiClient.defaults.headers.common['Authorization'];
     },
 
     register: async (credentials) => {
@@ -240,7 +247,7 @@ const useAuthStore = create((set, get) => ({
             const currentUser = get().user;
             if (!currentUser) return false;
             
-            set({ user: { ...currentUser, favorites: result.data || [] } });
+            set({ user: { ...currentUser, favorites: result || [] } });
             return true;
         } catch (err) {
             console.error('Add favorite failed:', err);
@@ -255,7 +262,7 @@ const useAuthStore = create((set, get) => ({
             const currentUser = get().user;
             if (!currentUser) return false;
             
-            set({ user: { ...currentUser, favorites: result.data || [] } });
+            set({ user: { ...currentUser, favorites: result || [] } });
             return true;
         } catch (err) {
             console.error('Remove favorite failed:', err);
@@ -266,9 +273,10 @@ const useAuthStore = create((set, get) => ({
     isFavorite: (contentId) => {
         const user = get().user;
         if (!user?.favorites) return false;
+        const idStr = String(contentId);
         return user.favorites.some(fav =>
-            fav.content_id === contentId ||
-            fav === contentId
+            String(fav.content_id) === idStr ||
+            String(fav) === idStr
         );
     },
 }));
