@@ -32,16 +32,16 @@ function LoginForm() {
         if (errors[name]) setErrors((prev) => ({...prev, [name]: ''}));
     };
 
-    const handleSubmit = async (e) => {
-       e.preventDefault();
-       const formErrors = validateForm(formData);
-       if (Object.keys(formErrors).length > 0) return setErrors(formErrors);
-       
-       const success = await login(formData);
-       if (success) {
-        setTimeout(() => navigate('/home'), 100);
-       }
-    };
+     const handleSubmit = async (e) => {
+        e.preventDefault();
+        const formErrors = validateForm(formData);
+        if (Object.keys(formErrors).length > 0) return setErrors(formErrors);
+        
+        const success = await login(formData);
+        if (success) {
+         navigate('/home');
+        }
+     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">

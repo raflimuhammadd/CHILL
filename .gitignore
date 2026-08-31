@@ -16,6 +16,7 @@ build/
 # Graphify generated architecture files
 *-ARCHITECTURE.md
 graphify-out/
+cypress/
 
 # Logs
 logs/

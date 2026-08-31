@@ -80,7 +80,7 @@ const useAuthStore = create((set, get) => ({
     },
 
     login: async (credentials) => {
-        set({ isLoading: true, error: null, initialized: false });
+        set({ isLoading: true, error: null });
         try {
             const result = await loginUser({
                 username: credentials.username,
@@ -97,7 +97,8 @@ const useAuthStore = create((set, get) => ({
             set({ 
                 accessToken, 
                 user: normalizedUser, 
-                isLoading: false 
+                isLoading: false,
+                initialized: true 
             });
             localStorage.setItem('accessToken', accessToken);
 

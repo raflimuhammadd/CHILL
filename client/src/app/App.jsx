@@ -32,13 +32,6 @@ function App() {
         initializeAuth();
     }, []);
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-chill-dark flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white" />
-            </div>
-        );
-    }
 
     return (
         <BrowserRouter>
@@ -68,6 +61,12 @@ function App() {
 
                 <Route path="/" element={<Navigate to="/home" replace />} />
             </Routes>
+            {isLoading && (
+                <div className="fix inset-0 z-50 min-h-screen bg-chill-dark flex items-center
+                justify-center">
+                    <div className="animate-spin ..."/>
+                </div>
+            )}
         </BrowserRouter>
     );
 }
