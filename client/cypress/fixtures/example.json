@@ -1,0 +1,23 @@
+{
+  "validUser": {
+    "username": "cypress_new_user",
+    "password": "Test123456"
+  },
+  "newUser": {
+    "username": "cypress_new_user",
+    "password": "Test123456",
+    "email": "cypress_new_user@test.com"
+  },
+  "invalidUser": {
+    "username": "testuser",
+    "password": "wrongpass"
+  },
+  "shortUsername": {
+    "username": "ab",
+    "password": "Test123456"
+  },
+  "shortPassword": {
+    "username": "cypress",
+    "password": "12345"
+  }
+}
