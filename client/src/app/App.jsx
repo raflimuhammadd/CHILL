@@ -25,12 +25,12 @@ import useAuthStore from '../features/auth/store/authStore';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
-    const isLoading = useAuthStore((state) => state.isLoading);
+    // const isLoading = useAuthStore((state) => state.isLoading);
     const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
     useEffect(() => {
         initializeAuth();
-    }, []);
+    }, [initializeAuth]);
 
 
     return (
@@ -61,12 +61,6 @@ function App() {
 
                 <Route path="/" element={<Navigate to="/home" replace />} />
             </Routes>
-            {isLoading && (
-                <div className="fix inset-0 z-50 min-h-screen bg-chill-dark flex items-center
-                justify-center">
-                    <div className="animate-spin ..."/>
-                </div>
-            )}
         </BrowserRouter>
     );
 }

@@ -22,19 +22,19 @@ function HoverOverlay({film, variant = 'default'}) {
         navigate(`/watch/${film.id}`);
     };
 
-    const toggleFavorite = (e) => {
-        e.stopPropagation(); //prevent card click evnt
+    const toggleFavorite = async (e) => {
+        e?.stopPropagation(); //prevent card click evnt
         if (favorited) {
-            removeFromFavorites(film.id);
+            await removeFromFavorites(film.id);
         } else {
-            addToFavorites(film.id);
+            await addToFavorites(film.id);
         }
     };
 
-    const handleAddFavorite = async () => {
+    const handleAddFavorite = async (e) => {
         setIsLoading(true);
         try {
-            await toggleFavorite();
+            await toggleFavorite(e);
         } catch (err) {
             console.error('Failed to add favorite:', err);
         } finally {

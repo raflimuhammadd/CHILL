@@ -47,8 +47,10 @@ const useAuthStore = create((set, get) => ({
                     initialized: true,
                 });
                 return;
-            } catch {
-                localStorage.removeItem('accessToken');
+            } catch (err) {
+                if (err?.response?.status === 401) {
+                    localStorage.removeItem('accessToken');
+                }
             }
         }
         if (!get().user) {
@@ -131,8 +133,8 @@ const useAuthStore = create((set, get) => ({
         try {
             const result = await refreshAccessToken();
             const { accessToken } = result;
-            
             set({ accessToken });
+            localStorage.setItem('accessToken', accessToken);
             return accessToken;
         } catch (err) {
             console.error('Refresh token failed:', err);
