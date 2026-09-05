@@ -1,30 +1,25 @@
-const db = require('../../config/database');
+const genreRepository = require('./genreRepository');
 const {ValidationError, ConflictError, NotFoundError} = require('../../utils/error');
-const { MESSAGES } = require('../../utils/constant');
-
+const {MESSAGES} = require('../../utils/constant');
 
 class GenreService {
     async getAllGenres() {
         try {
-            const [rows] = await db.query(
-                'SELECT id, name, slug, created_at FROM genres ORDER BY id ASC'
-            );
+            const rows = await genreRepository.getAllGenres();
             return rows;
         } catch (error) {
-            console.log('Error in getAllGenres:', error);
-            throw new Error('Failed to fetch genres from DB');
+            console.error('[GenreService] Error in getAllGenres:', error);
+            throw new Error('Failed to fetch genres');
         }
     }
 
     async getGenreById(id) {
         try {
-            const [rows] = await db.query(
-                'SELECT id, name, slug, created_at FROM genres WHERE id = ?', [id]
-            );
-            return rows[0];
+            const genre = await genreRepository.getGenreById(id);
+            return genre;
         } catch (error) {
-            console.log('Error in getGenreById:', error);
-            throw new Error('Failed to fetch genre from DB');
+            console.error('[GenreService] Error in getGenreById:', error);
+            throw new Error('Failed to fetch genre by ID');
         }
     }
 
@@ -35,19 +30,16 @@ class GenreService {
             if (!name || name.trim() === '') {
                 throw new ValidationError(MESSAGES.GENRE_NAME_REQUIRED);
             }
-
             const slug = data.slug || this._generateSlug(name);
+            const isDuplicate = await genreRepository.checkDuplicateSlug(slug);
 
-            const isDuplicate = await this._checkDuplicateSlug(slug);
             if (isDuplicate) {
-                throw new Error (`Slug '${slug}' already exists`);
+                throw new ConflictError(`Slug '${slug}' already exists`);
             }
-            const [result] = await db.query(
-                'INSERT INTO genres (name, slug, created_at) VALUES (?, ?, NOW())', [name.trim(), slug]
-            );
-            return await this.getGenreById(result.insertId);
+            const insertId = await genreRepository.createGenre(name.trim(), slug);
+            return await this.getGenreById(insertId);
         } catch (error) {
-            console.log('Error in createGenre:', error);
+            console.error('[GenreService] Error in createGenre:', error);
             throw error;
         }
     }
@@ -56,29 +48,30 @@ class GenreService {
         try {
             const existing = await this.getGenreById(id);
             if (!existing) {
-                throw new Error('Genre not found');
+                throw new NotFoundError('Genre not found');
             }
 
             if (!data.name && !data.slug) {
-                throw new Error('At least one field (name or slug) must be provided');
+                throw new ValidationError('At least one of name or slug must be provided for update');
             }
 
             const name = data.name ? data.name.trim() : existing.name;
             const slug = data.slug ? data.slug.trim() : (data.name ? this._generateSlug(name) : existing.slug);
 
             if (slug !== existing.slug) {
-                const isDuplicate = await this._checkDuplicateSlug(slug, id);
+                const isDuplicate = await genreRepository.checkDuplicateSlug(slug, id);
                 if (isDuplicate) {
-                    throw new Error (`Slug '${slug}' already exists`);
+                    throw new ConflictError(`Slug '${slug}' already exists`);
                 }
             }
 
-            await db.query(
-                'UPDATE genres SET name = ?, slug = ? WHERE id = ?', [name, slug, id]
-            );
+            const update = await genreRepository.updateGenre(id, name, slug);
+            if (!update) {
+                throw new Error('Failed to update genre');
+            }
             return await this.getGenreById(id);
         } catch (error) {
-            console.log('Error in updateGenre:', error);
+            console.log('Error in updateGenre', error);
             throw error;
         }
     }
@@ -87,54 +80,29 @@ class GenreService {
         try {
             const existing = await this.getGenreById(id);
             if (!existing) {
-                throw new Error('Genre not found');
+                throw new NotFoundError('Genre not found');
             }
 
-            await db.query(
-                'DELETE FROM genres WHERE id = ?', [id]
-            );
+            const deleted = await genreRepository.deleteGenre(id);
+            if (!deleted) {
+                throw new Error('Failed to delete genre');
+            }
+
             return {message: 'Genre deleted successfully'};
         } catch (error) {
-            console.log('Error in deleteGenre:', error);
+            console.error('[GenreService] Error in deleteGenre:', error);
             throw error;
         }
     }
 
-    /**
-     * 
-     * Helper generate slug from name
-     * converts = "Actions Movies" -> "action-movies"
-     */
     _generateSlug(name) {
         return name
             .toLowerCase()
-            .trim() // remove leading/trailing spaces
-            .replace(/[^\w\s-]/g, '') // remove special chars
-            .replace(/[\s_]+/g, '-')   // replace spaces and underscores with hyphens
-            .replace(/-+/g, '-')       // replace multiple hyphens with single one
-            .replace(/^-+|-+$/g, '');   // remove leading/trailing hyphens
-    }
-
-    /**
-     * 
-     * Helper check duplicate slug
-     */
-    async _checkDuplicateSlug(slug, excludeId = null) {
-        try {
-            let sql = 'SELECT id FROM genres WHERE slug = ?';
-            const params = [slug];
-
-            if (excludeId) {
-                sql += ' AND id != ?';
-                params.push(excludeId);
-            }
-
-            const [rows] = await db.query(sql, params);
-            return rows.length > 0;
-        } catch (error) {
-            console.log('Error in _checkDuplicateSlug:', error);
-            throw new Error ('Failed to check duplicate slug');
-        }
+            .trim()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '')
     }
 }
 
