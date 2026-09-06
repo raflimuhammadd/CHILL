@@ -117,7 +117,7 @@ const paymentSchemas = {
         properties: {
           token: {
             type: 'string',
-            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpCJ9...',
             description: 'Midtrans Snap token'
           },
           redirect_url: {
@@ -163,7 +163,7 @@ const paymentSchemas = {
         properties: {
           client_key: {
             type: 'string',
-            example: 'SB-Mid-client-bGn-S0lemItUxobg',
+            example: 'SB-Mid-client-YourClientKeyHere',
             description: 'Midtrans client key for frontend'
           }
         }
