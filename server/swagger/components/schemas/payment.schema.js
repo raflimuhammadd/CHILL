@@ -117,7 +117,7 @@ const paymentSchemas = {
         properties: {
           token: {
             type: 'string',
-            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpCJ9...',
+            example: 'your_snap_token_here',
             description: 'Midtrans Snap token'
           },
           redirect_url: {
