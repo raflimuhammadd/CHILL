@@ -7,6 +7,11 @@ require ('dotenv').config();
 const cookieParser = require('cookie-parser');
 const {generalLimiter} = require('./middleware/rateLimiter');
 
+// Swagger configuration
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const swaggerConfig = require('./swagger/swaggerConfig');
+
 const app = express();
 app.use(cors({
     origin: (origin, callback) => {
@@ -42,6 +47,26 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // rate limiting
 app.use(generalLimiter);
 
+// Generate Swagger/OpenAPI spec
+const specs = swaggerJsdoc(swaggerConfig);
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Chill Streams API Documentation',
+    swaggerOptions: {
+        persistAuthorization: true,
+        displayOperationId: true
+    }
+}));
+
+// OpenAPI JSON
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+});
+
 // health check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -64,32 +89,47 @@ app.get('/api', (req, res) => {
         name: 'Chill Streams API',
         version: '1.0.0',
         description: 'Backend API for Chill Streams application',
+        documentation: 'http://localhost:3000/api-docs',
         endpoints: {
             health: 'GET /api/health',
-            genres: 'GET /api/genres',
-            getGenreById: 'GET /api/genres/:id',
-            createGenre: 'POST /api/genres',
-            updateGenre: 'PATCH /api/genres/:id',
-            deleteGenre: 'DELETE /api/genres/:id',
-            register: 'POST /api/auth/register',
-            login: 'POST /api/auth/login',
-            verifyEmail: 'POST /api/auth/verify-email',
-            getUserById: 'GET /api/users/me',
-            updateUser: 'PATCH /api/users/me',
-            uploadAvatar: 'POST /api/upload',
-        },
-        documentation: 'https://github.com/raflimuhammadd/CHILL'
+            apiDocs: 'GET /api-docs',
+            apiDocsJson: 'GET /api-docs.json',
+            genres: 'GET /api/genres or /api/v1/genres',
+            auth: 'POST /api/auth/login',
+            contents: 'GET /api/contents or /api/v1/contents',
+            users: 'GET /api/users/me or /api/v1/users/me',
+            watchHistory: 'GET /api/watch-history or /api/v1/watch-history',
+            payments: 'POST /api/payments or /api/v1/payments'
+        }
     });
 });
 
-// Routes
-app.use('/api/genres', require('./features/genre/genreRoutes'));
-app.use('/api/auth', require('./features/auth/authRoutes'));
-app.use('/api/contents', require('./features/content/contentRoutes'));
-app.use('/api/users', require('./features/user/userRoutes'));
-app.use('/api/watch-history', require('./features/watch-history/watchHistoryRoutes'));
-app.use('/api/upload', require('./features/upload/uploadRoutes'));
-app.use('/api/payments', require('./features/payment/paymentRoutes'));
+// Routes - Maintain backward compatibility with non-versioned paths
+const genreRoutes = require('./features/genre/genreRoutes');
+const authRoutes = require('./features/auth/authRoutes');
+const contentRoutes = require('./features/content/contentRoutes');
+const userRoutes = require('./features/user/userRoutes');
+const watchHistoryRoutes = require('./features/watch-history/watchHistoryRoutes');
+const uploadRoutes = require('./features/upload/uploadRoutes');
+const paymentRoutes = require('./features/payment/paymentRoutes');
+
+// Non-versioned routes (backward compatibility)
+app.use('/api/genres', genreRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/contents', contentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/watch-history', watchHistoryRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/payments', paymentRoutes);
+
+// Versioned routes (v1)
+app.use('/api/v1/genres', genreRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/contents', contentRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/watch-history', watchHistoryRoutes);
+app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 app.use((req, res, next) => {
     res.status(404).json({
