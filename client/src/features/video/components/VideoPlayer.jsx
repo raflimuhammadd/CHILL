@@ -64,6 +64,13 @@ function VideoPlayer({ youtubeId, title, isBlocked, episodes, currentEpisodeId, 
     try {
       console.log('[YouTube Event]', event.data);
       const data = JSON.parse(event.data);
+
+      if (data.event === 'onReady') {
+        setIsPlayerReady(true);
+        sendMessageToIframe({ event: 'command', func: 'getCurrentTime', args: []});
+        sendMessageToIframe({ event: 'command', func: 'getDuration', args: []});
+      }
+
       if (data.event === 'onStateChange') {
         setPlaying(data.info === 1);
       }
@@ -81,7 +88,7 @@ function VideoPlayer({ youtubeId, title, isBlocked, episodes, currentEpisodeId, 
     } catch (e) {
       console.error('Message parse error:', e);
     }
-  }, [setPlaying, setCurrentTime, setDuration, setBuffered]);
+  }, [setPlaying, setCurrentTime, setDuration, setBuffered, sendMessageToIframe]);
 
       useEffect(() => {
       window.addEventListener('message', handleIframeMessage);
@@ -253,7 +260,14 @@ const iframeSrc = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=
         title={title}
         onLoad={() => {
           setIsLoading(false);
-          setIsPlayerReady(true);
+          setTimeout(() => {
+            if (iframeRef.current?.contentWindow) {
+              iframeRef.current.contentWindow.postMessage(
+                JSON.stringify({ event: 'listening'}),
+                '*'
+              );
+            }
+          }, 100);
         }}
       />
 
