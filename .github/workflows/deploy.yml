@@ -1,0 +1,44 @@
+name: Deploy to Tencent EdgeOne
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+      
+      - run: npm install
+      
+      - run: npm run lint
+        working-directory: ./code/client
+
+  build-and-deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+      
+      - run: npm install
+        working-directory: ./code/client
+      
+      - run: npm run build
+        # Vite builds to dist/ folder
+        working-directory: ./code/client
+      
+      - run: npx edgeone makers deploy -n chill-frontend -e production
+        # EdgeOne CLI deploys built dist/ to production
+        working-directory: ./code/client
+        env:
+          TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
