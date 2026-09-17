@@ -257,9 +257,16 @@ class AuthService {
     }
 
     _sanitize(user) {
-        if (!user) return null;
-        const { password_hash, ...safeUser } = user;
-        return safeUser;
+    if (!user) return null;
+    const {
+        password_hash,
+        email_verification_token,
+        email_verification_token_expires_at,
+        email_verification_sent_at,
+        refresh_token_version,
+        ...safeUser
+    } = user;
+    return safeUser;
     }
 }
 
