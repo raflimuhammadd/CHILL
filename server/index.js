@@ -11,6 +11,7 @@ const {generalLimiter} = require('./middleware/rateLimiter');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const swaggerConfig = require('./swagger/swaggerConfig');
+const clientURL = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : null;
 
 const app = express();
 app.use(cors({
@@ -18,8 +19,12 @@ app.use(cors({
         const allowedOrigins = [
             'http://localhost:5173',  // Vite dev server
             'http://localhost:3000',  // Alternative frontend server
-             process.env.CLIENT_URL?.replace(/\/$/, '')
         ];
+
+        if (clientURL) {
+            allowedOrigins.push(clientURL);
+        }
+
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -28,7 +33,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-CSRF-Token'],
 }));
 
 app.use(cookieParser());
