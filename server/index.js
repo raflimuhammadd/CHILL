@@ -19,6 +19,8 @@ app.use(cors({
         const allowedOrigins = [
             'http://localhost:5173',  // Vite dev server
             'http://localhost:3000',  // Alternative frontend server
+            process.env.CLIENT_URL,   // From environment variable
+            'https://chill-frontend.edgeone.dev', 
         ];
 
         if (clientURL) {

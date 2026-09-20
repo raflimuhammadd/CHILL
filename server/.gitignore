@@ -29,6 +29,7 @@ dist-ssr
 .env.production
 .env.staging
 .env.development
+.env.docker.production
 
 # Aiven certs
 certs/
