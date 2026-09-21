@@ -22,6 +22,9 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy built dependencies from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 
+# Create uploads directory with proper ownership
+RUN mkdir -p /app/uploads && chown nodejs:nodejs /app/uploads
+
 # Copy application code
 COPY --chown=nodejs:nodejs . .
 

@@ -12,6 +12,8 @@ services:
       - NODE_ENV=production
       - TZ=Asia/Jakarta  # Adjust to your timezone
     restart: always
+    volumes:
+      - uploads:/app/uploads
     logging:
       driver: "json-file"
       options:
@@ -26,6 +28,9 @@ services:
     networks:
       - chill-streams-prod-network
 
+volumes:
+  uploads:
+    driver: local
 networks:
   chill-streams-prod-network:
     driver: bridge
