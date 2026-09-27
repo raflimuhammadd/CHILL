@@ -6,6 +6,8 @@ const { uploadAvatar } = require('./features/upload/uploadController');
 require ('dotenv').config();
 const cookieParser = require('cookie-parser');
 const {generalLimiter} = require('./middleware/rateLimiter');
+const metricsMiddleware = require('./middleware/metricsMiddleware');
+const { register } = require('./utils/metrics');
 
 // Swagger configuration
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -14,6 +16,7 @@ const swaggerConfig = require('./swagger/swaggerConfig');
 const clientURL = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : null;
 
 const app = express();
+app.use(metricsMiddleware);
 app.use(cors({
     origin: (origin, callback) => {
         const allowedOrigins = [
@@ -54,6 +57,21 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // rate limiting
 app.use(generalLimiter);
+
+// Health check endpoint (untuk Docker healthcheck + metrics)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
+});
 
 // Generate Swagger/OpenAPI spec
 const specs = swaggerJsdoc(swaggerConfig);
